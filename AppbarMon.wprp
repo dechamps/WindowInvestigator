@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+	<Profiles>
+		<EventCollector Id="EventCollector_AppbarMon" Name="AppbarMon" />
+		<Profile Id="AppbarMon.Verbose.File" Name="AppbarMon" Description="AppbarMon" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors>
+				<EventCollectorId Value="EventCollector_AppbarMon">
+					<EventProviders>
+						<EventProvider Id="EventProvider_AppbarMon" Name="500D9509-6850-440C-AD11-6EA625EC91BC" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="AppbarMon.Verbose.Memory" Base="AppbarMon.Verbose.File" LoggingMode="Memory" Name="AppbarMon" Description="AppbarMon" DetailLevel="Verbose" />
+	</Profiles>
+</WindowsPerformanceRecorder>

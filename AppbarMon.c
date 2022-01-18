@@ -1,19 +1,12 @@
 #include <Windows.h>
+#include <TraceLoggingProvider.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "AppbarMon", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
+
 static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	if (uMsg != WM_USER) {
-		fprintf(stderr, "Got unknown message %x\n", uMsg);
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
-	if (wParam != ABN_FULLSCREENAPP) {
-		fprintf(stderr, "Got unknown notification code %llx\n", wParam);
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
-	fprintf(stderr, "Got ABN_FULLSCREENAPP with param %llx\n", lParam);
+	TraceLoggingWrite(traceloggingProvider, "ReceivedMessage", TraceLoggingUInt32(uMsg, "uMsg"), TraceLoggingUInt64(wParam, "wParam"), TraceLoggingUInt64(lParam, "lParam"));
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -57,6 +50,16 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "SHAppBarMessage(ABM_NEW) failed\n");
 		return EXIT_FAILURE;
 	}
+
+	const HRESULT registerResult = TraceLoggingRegister(traceloggingProvider);
+	if (!SUCCEEDED(registerResult)) {
+		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
+		return EXIT_FAILURE;
+	}
+
+	// Note: in practice TaskbarMon needs to run as administrator to get Realtime priority. Otherwise it gets silently demoted to High.
+	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
+		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
 
 	for (;;)
 	{
