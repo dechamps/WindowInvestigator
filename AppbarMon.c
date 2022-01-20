@@ -42,6 +42,11 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
+	if (!RegisterShellHookWindow(window)) {
+		fprintf(stderr, "RegisterShellHookWindow failed\n");
+		return EXIT_FAILURE;
+	}
+
 	APPBARDATA abd;
 	abd.cbSize = sizeof(abd);
 	abd.hWnd = window;
