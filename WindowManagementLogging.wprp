@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+	<Profiles>
+		<EventCollector Id="EventCollector_WindowManagementLogging" Name="WindowManagementLogging" />
+		<Profile Id="WindowManagementLogging.Verbose.File" Name="WindowManagementLogging" Description="WindowManagementLogging" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors>
+				<EventCollectorId Value="EventCollector_WindowManagementLogging">
+					<EventProviders>
+						<EventProvider Id="EventProvider_WindowManagementLogging" Name="F84AA759-31D3-59BF-2C89-3748CF17FD7E" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="WindowManagementLogging.Verbose.Memory" Base="WindowManagementLogging.Verbose.File" LoggingMode="Memory" Name="WindowManagementLogging" Description="WindowManagementLogging" DetailLevel="Verbose" />
+	</Profiles>
+</WindowsPerformanceRecorder>
