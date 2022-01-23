@@ -1,0 +1,7 @@
+; Private, undocumented user32.dll functions used by AppbarMon.
+; These are exported by user32.dll, but are not present in the Microsoft-provided import library, so we need to define the DLL imports ourselves.
+LIBRARY user32
+EXPORTS
+GetWindowBand
+IsShellFrameWindow @2573
+IsShellManagedWindow @2574
