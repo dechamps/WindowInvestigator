@@ -116,6 +116,11 @@ static LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	State* const state = GetWindowState(hWnd);
 	if (state != NULL) LogTopLevelWindows(state);
 
+	if (SetTimer(hWnd, 1, USER_TIMER_MINIMUM, NULL) == 0) {
+		fprintf(stderr, "SetTimer failed() [0x%x]\n", GetLastError());
+		exit(EXIT_FAILURE);
+	}
+
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
