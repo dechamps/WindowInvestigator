@@ -183,6 +183,13 @@ int main(int argc, char** argv) {
 	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
 		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
 
+	const UINT shellhookMessage = RegisterWindowMessageW(L"SHELLHOOK");
+	if (shellhookMessage == 0) {
+		fprintf(stderr, "RegisterWindowMessageW(\"SHELLHOOK\") failed [0x%x]\n", GetLastError());
+		return EXIT_FAILURE;
+	}
+	TraceLoggingWrite(traceloggingProvider, "Started", TraceLoggingHexUInt32(shellhookMessage));
+
 	for (;;)
 	{
 		MSG message;
