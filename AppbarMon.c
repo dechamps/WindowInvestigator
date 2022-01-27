@@ -280,6 +280,7 @@ static BOOL CALLBACK AppbarMon_LogTopLevelWindows_EnumWindowsProc(HWND window, L
 			Window* const newWindow = *state->window = malloc(sizeof(**state->window));
 			if (newWindow == NULL) abort();
 			newWindow->window = window;
+			newWindow->seen = FALSE;
 			isNewWindow = TRUE;
 		}
 		else {
@@ -296,6 +297,10 @@ static BOOL CALLBACK AppbarMon_LogTopLevelWindows_EnumWindowsProc(HWND window, L
 	if (!isNewWindow) AppBarMon_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
 	currentWindow->info = windowInfo;
 
+	if (currentWindow->seen) {
+		fprintf(stderr, "Window 0x%p already seen!", window);
+		exit(EXIT_FAILURE);
+	}
 	currentWindow->seen = TRUE;
 	state->window = &(*state->window)->next;
 	++state->zOrder;
