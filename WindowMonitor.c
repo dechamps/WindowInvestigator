@@ -66,6 +66,26 @@ typedef struct {
 	// RudeWindowWin32Functions::MonitorFromWindow() missing
 } WindowMonitor_WindowInfo;
 
+static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowInfo) {
+	printf("Class name: \"%S\"\n", windowInfo->className);
+	printf("Extended styles: 0x%08X\n", windowInfo->extendedStyles);
+	printf("Styles: 0x%08lX\n", windowInfo->styles);
+	printf("Window rect: (%ld, %ld, %ld, %ld)\n", windowInfo->windowRect.left, windowInfo->windowRect.top, windowInfo->windowRect.right, windowInfo->windowRect.bottom);
+	printf("Client rect: (%ld, %ld, %ld, %ld)\n", windowInfo->clientRect.left, windowInfo->clientRect.top, windowInfo->clientRect.right, windowInfo->clientRect.bottom);
+	printf("Text: \"%S\"\n", windowInfo->text);
+	printf("Shell managed: %s\n", windowInfo->isShellManagedWindow ? "TRUE" : "FALSE");
+	printf("Shell frame: %s\n", windowInfo->isShellFrameWindow ? "TRUE" : "FALSE");
+	printf("Overpanning: %s\n", windowInfo->overpanning ? "TRUE" : "FALSE");
+	printf("Band: %lu\n", windowInfo->band);
+	printf("Has \"NonRudeHWND\" property: %s\n", windowInfo->hasNonRudeHWNDProperty ? "TRUE" : "FALSE");
+	printf("Has \"LivePreviewWindow\" property: %s\n", windowInfo->hasLivePreviewWindowProperty ? "TRUE" : "FALSE");
+	printf("Has \"TreatAsDesktopFullscreen\" property: %s\n", windowInfo->hasTreatAsDesktopFullscreenProperty ? "TRUE" : "FALSE");
+	printf("Is window: %s\n", windowInfo->isWindow ? "TRUE" : "FALSE");
+	printf("DWM is cloaked: 0x%08lX\n", windowInfo->dwmIsCloaked);
+	printf("Is iconic: %s\n", windowInfo->isIconic ? "TRUE" : "FALSE");
+	printf("Is visible: %s\n", windowInfo->isVisible ? "TRUE" : "FALSE");
+}
+
 static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 	WindowMonitor_WindowInfo windowInfo;
 
@@ -338,6 +358,43 @@ static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+static BOOL CALLBACK WindowMonitor_DumpTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
+	UNREFERENCED_PARAMETER(lParam);
+
+	if (!IsWindowVisible(window)) return TRUE;
+
+	printf("HWND: 0x%p\n", window);
+
+	DWORD processId;
+	const DWORD threadId = GetWindowThreadProcessId(window, &processId);
+	printf("PID: %lu TID: %lu ", processId, threadId);
+	const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+	if (process == NULL)
+		printf("(could not open process [0x%x])", GetLastError());
+	else {
+		wchar_t imageName[4096];
+		DWORD imageNameSize = sizeof(imageName) / sizeof(*imageName);
+		if (!QueryFullProcessImageNameW(process, /*dwFlags=*/0, imageName, &imageNameSize))
+			printf("(could not get process image name[0x % x])", GetLastError());
+		else
+			printf("\"%S\"", imageName);
+	}
+	printf("\n");
+
+	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+	WindowMonitor_DumpWindowInfo(&windowInfo);
+	printf("\n");
+
+	return TRUE;
+}
+
+static void WindowMonitor_DumpTopLevelWindows(void) {
+	if (EnumWindows(WindowMonitor_DumpTopLevelWindows_EnumWindowsProc, 0) == 0) {
+		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
+		exit(EXIT_FAILURE);
+	}
+}
+
 int main(int argc, char** argv) {
 	UNREFERENCED_PARAMETER(argc);
 	UNREFERENCED_PARAMETER(argv);
@@ -401,6 +458,9 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "RegisterWindowMessageW(\"SHELLHOOK\") failed [0x%x]\n", GetLastError());
 		return EXIT_FAILURE;
 	}
+
+	WindowMonitor_DumpTopLevelWindows();
+
 	TraceLoggingWrite(traceloggingProvider, "Started", TraceLoggingHexUInt32(shellhookMessage));
 
 	for (;;)
