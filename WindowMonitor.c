@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <dwmapi.h>
 
-TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "AppbarMon", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
+TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "WindowMonitor", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
 
 // Declarations reverse-engineered from twinui.dll
 __declspec(dllimport) BOOL WINAPI IsShellManagedWindow(HWND hwnd);
@@ -64,10 +64,10 @@ typedef struct {
 	BOOL isVisible;
 
 	// RudeWindowWin32Functions::MonitorFromWindow() missing
-} WindowInfo;
+} WindowMonitor_WindowInfo;
 
-static WindowInfo AppbarMon_GetWindowInfo(HWND window) {
-	WindowInfo windowInfo;
+static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
+	WindowMonitor_WindowInfo windowInfo;
 
 	SetLastError(NO_ERROR);
 	GetClassNameW(window, windowInfo.className, sizeof(windowInfo.className) / sizeof(*windowInfo.className));
@@ -127,7 +127,7 @@ static WindowInfo AppbarMon_GetWindowInfo(HWND window) {
 	return windowInfo;
 }
 
-static void AppBarMon_DiffWindowInfo(HWND window, const WindowInfo* oldWindowInfo, const WindowInfo* newWindowInfo) {
+static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_WindowInfo* oldWindowInfo, const WindowMonitor_WindowInfo* newWindowInfo) {
 	if (wcscmp(oldWindowInfo->className, newWindowInfo->className) != 0)
 		TraceLoggingWrite(traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingWideString(oldWindowInfo->className, "OldClassName"), TraceLoggingWideString(newWindowInfo->className, "NewClassName"));
@@ -203,19 +203,19 @@ static void AppBarMon_DiffWindowInfo(HWND window, const WindowInfo* oldWindowInf
 			TraceLoggingBool(oldWindowInfo->isVisible, "OldIsVisible"), TraceLoggingBool(newWindowInfo->isVisible, "NewIsVisible"));
 }
 
-struct Window_s {
+struct WindowMonitor_Window_s {
 	HWND window;
-	struct Window_s* next;
+	struct WindowMonitor_Window_s* next;
 	BOOL seen;
-	WindowInfo info;
+	WindowMonitor_WindowInfo info;
 };
-typedef struct Window_s Window;
+typedef struct WindowMonitor_Window_s WindowMonitor_Window;
 
 typedef struct {
-	Window* foregroundWindow;
+	WindowMonitor_Window* foregroundWindow;
 } State;
 
-static void AppbarMon_OnWindowCreate(HWND window, LPARAM lParam) {
+static void WindowMonitor_OnWindowCreate(HWND window, LPARAM lParam) {
 	SetLastError(NO_ERROR);
 	SetWindowLongPtrW(window, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
 	const DWORD setWindowLongError = GetLastError();
@@ -225,7 +225,7 @@ static void AppbarMon_OnWindowCreate(HWND window, LPARAM lParam) {
 	}
 }
 
-static State* AppbarMon_GetWindowState(HWND window) {
+static State* WindowMonitor_GetWindowState(HWND window) {
 	SetLastError(NO_ERROR);
 	State* state = (State*)GetWindowLongPtrW(window, GWLP_USERDATA);
 	const DWORD getWindowLongError = GetLastError();
@@ -237,19 +237,19 @@ static State* AppbarMon_GetWindowState(HWND window) {
 	return state;
 }
 
-static Window** AppbarMon_SearchWindow(Window** window, HWND match) {
+static WindowMonitor_Window** WindowMonitor_SearchWindow(WindowMonitor_Window** window, HWND match) {
 	for (; *window != NULL && (*window)->window != match; window = &(*window)->next);
 	return window;
 }
 
-static void AppbarMon_MarkAllWindowsUnseen(Window* window) {
+static void WindowMonitor_MarkAllWindowsUnseen(WindowMonitor_Window* window) {
 	for (; window != NULL; window = window->next)
 		window->seen = FALSE;
 }
 
-static void AppbarMon_RemoveUnseenWindows(Window** nextWindow) {
+static void WindowMonitor_RemoveUnseenWindows(WindowMonitor_Window** nextWindow) {
 	while (*nextWindow != NULL) {
-		Window* const window = *nextWindow;
+		WindowMonitor_Window* const window = *nextWindow;
 		if (window->seen) {
 			nextWindow = &window->next;
 			continue;
@@ -262,22 +262,22 @@ static void AppbarMon_RemoveUnseenWindows(Window** nextWindow) {
 }
 
 typedef struct {
-	Window** window;
+	WindowMonitor_Window** window;
 	UINT32 zOrder;
-} LogTopLevelWindows_State;
+} WindowMonitor_LogTopLevelWindows_State;
 
-static BOOL CALLBACK AppbarMon_LogTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
+static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
 	if (!IsWindowVisible(window)) return TRUE;
 
-	LogTopLevelWindows_State* const state = (LogTopLevelWindows_State *)lParam;
+	WindowMonitor_LogTopLevelWindows_State* const state = (WindowMonitor_LogTopLevelWindows_State *)lParam;
 
 	BOOL isNewWindow = FALSE;
 	if (*state->window == NULL || (*state->window)->window != window) {
-		Window** const existingWindow = AppbarMon_SearchWindow(state->window, window);
-		Window* const previousWindow = *state->window;
+		WindowMonitor_Window** const existingWindow = WindowMonitor_SearchWindow(state->window, window);
+		WindowMonitor_Window* const previousWindow = *state->window;
 		if (*existingWindow == NULL) {
 			TraceLoggingWrite(traceloggingProvider, "NewWindow", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
-			Window* const newWindow = *state->window = malloc(sizeof(**state->window));
+			WindowMonitor_Window* const newWindow = *state->window = malloc(sizeof(**state->window));
 			if (newWindow == NULL) abort();
 			newWindow->window = window;
 			newWindow->seen = FALSE;
@@ -291,10 +291,10 @@ static BOOL CALLBACK AppbarMon_LogTopLevelWindows_EnumWindowsProc(HWND window, L
 		(*state->window)->next = previousWindow;
 	}
 
-	Window* currentWindow = *state->window;
+	WindowMonitor_Window* currentWindow = *state->window;
 
-	const WindowInfo windowInfo = AppbarMon_GetWindowInfo(window);
-	if (!isNewWindow) AppBarMon_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
+	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+	if (!isNewWindow) WindowMonitor_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
 	currentWindow->info = windowInfo;
 
 	if (currentWindow->seen) {
@@ -307,27 +307,27 @@ static BOOL CALLBACK AppbarMon_LogTopLevelWindows_EnumWindowsProc(HWND window, L
 	return TRUE;
 }
 
-static void AppbarMon_LogTopLevelWindows(State* const state) {
-	AppbarMon_MarkAllWindowsUnseen(state->foregroundWindow);
+static void WindowMonitor_LogTopLevelWindows(State* const state) {
+	WindowMonitor_MarkAllWindowsUnseen(state->foregroundWindow);
 
-	LogTopLevelWindows_State logTopLevelWindowsState;
+	WindowMonitor_LogTopLevelWindows_State logTopLevelWindowsState;
 	logTopLevelWindowsState.window = &state->foregroundWindow;
 	logTopLevelWindowsState.zOrder = 0;
-	if (EnumWindows(AppbarMon_LogTopLevelWindows_EnumWindowsProc, (LPARAM)&logTopLevelWindowsState) == 0) {
+	if (EnumWindows(WindowMonitor_LogTopLevelWindows_EnumWindowsProc, (LPARAM)&logTopLevelWindowsState) == 0) {
 		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
 		exit(EXIT_FAILURE);
 	}
 
-	AppbarMon_RemoveUnseenWindows(&state->foregroundWindow);
+	WindowMonitor_RemoveUnseenWindows(&state->foregroundWindow);
 }
 
-static LRESULT CALLBACK AppbarMon_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	TraceLoggingWrite(traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
 
-	if (uMsg == WM_CREATE) AppbarMon_OnWindowCreate(hWnd, lParam);
+	if (uMsg == WM_CREATE) WindowMonitor_OnWindowCreate(hWnd, lParam);
 
-	State* const state = AppbarMon_GetWindowState(hWnd);
-	if (state != NULL) AppbarMon_LogTopLevelWindows(state);
+	State* const state = WindowMonitor_GetWindowState(hWnd);
+	if (state != NULL) WindowMonitor_LogTopLevelWindows(state);
 	TraceLoggingWrite(traceloggingProvider, "Done");
 
 	if (SetTimer(hWnd, 1, USER_TIMER_MINIMUM, NULL) == 0) {
@@ -344,8 +344,8 @@ int main(int argc, char** argv) {
 
 	WNDCLASSEXW windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
-	windowClass.lpfnWndProc = AppbarMon_WindowProcedure;
-	windowClass.lpszClassName = L"AppbarMon";
+	windowClass.lpfnWndProc = WindowMonitor_WindowProcedure;
+	windowClass.lpszClassName = L"WindowMonitor";
 
 	if (RegisterClassExW(&windowClass) == 0) {
 		fprintf(stderr, "RegisterClassEx failed [%x]\n", GetLastError());
@@ -355,7 +355,7 @@ int main(int argc, char** argv) {
 	State state;
 	state.foregroundWindow = NULL;
 	const HWND window = CreateWindowW(
-		L"AppbarMon",
+		L"WindowMonitor",
 		NULL,
 		0,
 		CW_USEDEFAULT,

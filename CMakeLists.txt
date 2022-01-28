@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(AppbarMon)
+project(WindowMonitor)
 
 add_compile_options(/WX /W4 /permissive- /analyze)
 
@@ -15,8 +15,8 @@ add_library(user32_private SHARED IMPORTED)
 add_dependencies(user32_private user32_private_target)
 set_target_properties(user32_private PROPERTIES IMPORTED_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}/user32_private.lib")
 
-add_executable(AppbarMon "AppbarMon.c")
-target_link_libraries(AppbarMon
+add_executable(WindowMonitor "WindowMonitor.c")
+target_link_libraries(WindowMonitor
 	PRIVATE dwmapi
 	PRIVATE user32_private
 )
