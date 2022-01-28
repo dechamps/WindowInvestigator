@@ -26,6 +26,8 @@ typedef struct {
 	// RudeWindowWin32Functions::GetWindowRectForFullscreenCheck()
 	RECT windowRect;
 	RECT clientRect;
+	// This one is not part of RudeWindowWin32Functions, but included nonetheless because its output might be interesting.
+	WINDOWPLACEMENT placement;
 
 	// RudeWindowWin32Functions::InternalGetWindowText()
 	wchar_t text[1024];
@@ -72,6 +74,11 @@ static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowI
 	printf("Styles: 0x%08lX\n", windowInfo->styles);
 	printf("Window rect: (%ld, %ld, %ld, %ld)\n", windowInfo->windowRect.left, windowInfo->windowRect.top, windowInfo->windowRect.right, windowInfo->windowRect.bottom);
 	printf("Client rect: (%ld, %ld, %ld, %ld)\n", windowInfo->clientRect.left, windowInfo->clientRect.top, windowInfo->clientRect.right, windowInfo->clientRect.bottom);
+	printf("Placement: showCmd %u minPosition (%ld, %ld) maxPosition (%ld, %ld), normalPosition (%ld, %ld, %ld, %ld)\n",
+		windowInfo->placement.showCmd,
+		windowInfo->placement.ptMinPosition.x, windowInfo->placement.ptMinPosition.y,
+		windowInfo->placement.ptMaxPosition.x, windowInfo->placement.ptMaxPosition.y,
+		windowInfo->placement.rcNormalPosition.left, windowInfo->placement.rcNormalPosition.top, windowInfo->placement.rcNormalPosition.right, windowInfo->placement.rcNormalPosition.bottom);
 	printf("Text: \"%S\"\n", windowInfo->text);
 	printf("Shell managed: %s\n", windowInfo->isShellManagedWindow ? "TRUE" : "FALSE");
 	printf("Shell frame: %s\n", windowInfo->isShellFrameWindow ? "TRUE" : "FALSE");
@@ -112,6 +119,10 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 
 	if (!GetClientRect(window, &windowInfo.clientRect))
 		TraceLoggingWrite(traceloggingProvider, "clientRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+
+	windowInfo.placement.length = sizeof(windowInfo.placement);
+	if (!GetWindowPlacement(window, &windowInfo.placement))
+		TraceLoggingWrite(traceloggingProvider, "placementError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	SetLastError(NO_ERROR);
 	InternalGetWindowText(window, windowInfo.text, sizeof(windowInfo.text) / sizeof(*windowInfo.text));
@@ -173,6 +184,26 @@ static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_Window
 			TraceLoggingLong(oldWindowInfo->clientRect.right, "OldClientRectRight"), TraceLoggingLong(oldWindowInfo->clientRect.bottom, "OldClientRectBottom"),
 			TraceLoggingLong(newWindowInfo->clientRect.left, "NewClientRectLeft"), TraceLoggingLong(newWindowInfo->clientRect.top, "NewClientRectTop"),
 			TraceLoggingLong(newWindowInfo->clientRect.right, "NewClientRectRight"), TraceLoggingLong(newWindowInfo->clientRect.bottom, "NewClientRectBottom"));
+
+	if (oldWindowInfo->placement.showCmd != newWindowInfo->placement.showCmd)
+		TraceLoggingWrite(traceloggingProvider, "PlacementShowCmdChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingUInt32(oldWindowInfo->placement.showCmd, "OldShowCmd"), TraceLoggingUInt32(newWindowInfo->placement.showCmd, "NewShowCmd"));
+	if (oldWindowInfo->placement.ptMinPosition.x != newWindowInfo->placement.ptMinPosition.x ||
+		oldWindowInfo->placement.ptMinPosition.y != newWindowInfo->placement.ptMinPosition.y)
+		TraceLoggingWrite(traceloggingProvider, "PlacementMinPositionChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingLong(oldWindowInfo->placement.ptMinPosition.x, "OldMinPositionX"), TraceLoggingLong(oldWindowInfo->placement.ptMinPosition.y, "OldMinPositionY"),
+			TraceLoggingLong(newWindowInfo->placement.ptMinPosition.x, "NewMinPositionX"), TraceLoggingLong(newWindowInfo->placement.ptMinPosition.y, "NewMinPositionY"));
+	if (oldWindowInfo->placement.ptMaxPosition.x != newWindowInfo->placement.ptMaxPosition.x ||
+		oldWindowInfo->placement.ptMaxPosition.y != newWindowInfo->placement.ptMaxPosition.y)
+		TraceLoggingWrite(traceloggingProvider, "PlacementMaxPositionChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingLong(oldWindowInfo->placement.ptMaxPosition.x, "OldMaxPositionX"), TraceLoggingLong(oldWindowInfo->placement.ptMaxPosition.y, "OldMaxPositionY"),
+			TraceLoggingLong(newWindowInfo->placement.ptMaxPosition.x, "NewMaxPositionX"), TraceLoggingLong(newWindowInfo->placement.ptMaxPosition.y, "NewMaxPositionY"));
+	if (!EqualRect(&oldWindowInfo->placement.rcNormalPosition, &newWindowInfo->placement.rcNormalPosition))
+		TraceLoggingWrite(traceloggingProvider, "PlacementClientRectChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.left, "OldClientRectLeft"), TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.top, "OldClientRectTop"),
+			TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.right, "OldClientRectRight"), TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.bottom, "OldClientRectBottom"),
+			TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.left, "NewClientRectLeft"), TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.top, "NewClientRectTop"),
+			TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.right, "NewClientRectRight"), TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.bottom, "NewClientRectBottom"));
 
 	if (wcscmp(oldWindowInfo->text, newWindowInfo->text) != 0)
 		TraceLoggingWrite(traceloggingProvider, "WindowTextChanged", TraceLoggingPointer(window, "HWND"),
