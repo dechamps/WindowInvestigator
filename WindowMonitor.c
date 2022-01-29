@@ -389,11 +389,7 @@ static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-static BOOL CALLBACK WindowMonitor_DumpTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
-	UNREFERENCED_PARAMETER(lParam);
-
-	if (!IsWindowVisible(window)) return TRUE;
-
+static void WindowMonitor_DumpWindow(HWND window, const WindowMonitor_WindowInfo* windowInfo) {
 	printf("HWND: 0x%p\n", window);
 
 	DWORD processId;
@@ -412,9 +408,17 @@ static BOOL CALLBACK WindowMonitor_DumpTopLevelWindows_EnumWindowsProc(HWND wind
 	}
 	printf("\n");
 
-	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
-	WindowMonitor_DumpWindowInfo(&windowInfo);
+	WindowMonitor_DumpWindowInfo(windowInfo);
+
 	printf("\n");
+}
+
+static BOOL CALLBACK WindowMonitor_DumpTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
+	UNREFERENCED_PARAMETER(lParam);
+	if (!IsWindowVisible(window)) return TRUE;
+
+	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+	WindowMonitor_DumpWindow(window, &windowInfo);
 
 	return TRUE;
 }
@@ -426,10 +430,13 @@ static void WindowMonitor_DumpTopLevelWindows(void) {
 	}
 }
 
-int main(int argc, char** argv) {
-	UNREFERENCED_PARAMETER(argc);
-	UNREFERENCED_PARAMETER(argv);
+static void WindowMonitor_SetProcessPriority(void) {
+	// Note: in practice TaskbarMon needs to run as administrator to get Realtime priority. Otherwise it gets silently demoted to High.
+	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
+		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
+}
 
+static int WindowMonitor_MonitorAllWindows(void) {
 	WNDCLASSEXW windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
 	windowClass.lpfnWndProc = WindowMonitor_WindowProcedure;
@@ -474,15 +481,7 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	const HRESULT registerResult = TraceLoggingRegister(traceloggingProvider);
-	if (!SUCCEEDED(registerResult)) {
-		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
-		return EXIT_FAILURE;
-	}
-
-	// Note: in practice TaskbarMon needs to run as administrator to get Realtime priority. Otherwise it gets silently demoted to High.
-	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
-		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
+	WindowMonitor_SetProcessPriority();
 
 	const UINT shellhookMessage = RegisterWindowMessageW(L"SHELLHOOK");
 	if (shellhookMessage == 0) {
@@ -506,4 +505,47 @@ int main(int argc, char** argv) {
 			return EXIT_SUCCESS;
 		DispatchMessage(&message);
 	}
+}
+
+static int WindowMonitor_MonitorSingleWindow(HWND window) {
+	if (!IsWindow(window)) {
+		fprintf(stderr, "ERROR: handle 0x%p does not refer to a window", window);
+		return EXIT_FAILURE;
+	}
+
+	WindowMonitor_SetProcessPriority();
+
+	WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+	WindowMonitor_DumpWindow(window, &windowInfo);
+
+	for (;;) {
+		TraceLoggingWrite(traceloggingProvider, "Start");
+		const WindowMonitor_WindowInfo newWindowInfo = WindowMonitor_GetWindowInfo(window);
+		TraceLoggingWrite(traceloggingProvider, "Done");
+		WindowMonitor_DiffWindowInfo(window, &windowInfo, &newWindowInfo);
+
+		windowInfo = newWindowInfo;
+		Sleep(2);
+	}
+}
+
+int wmain(int argc, const wchar_t* const* const argv, const wchar_t* const* const envp) {
+	UNREFERENCED_PARAMETER(envp);
+
+	const HRESULT registerResult = TraceLoggingRegister(traceloggingProvider);
+	if (!SUCCEEDED(registerResult)) {
+		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
+		return EXIT_FAILURE;
+	}
+
+	if (argc < 2)
+		return WindowMonitor_MonitorAllWindows();
+	else if (argc == 2) {
+		HWND window;
+		if (swscanf_s(argv[1], L"0x%p", &window) == 1)
+			return WindowMonitor_MonitorSingleWindow(window);
+	}
+	
+	fprintf(stderr, "usage: WindowMonitor [<HWND, e.g. 0x0123ABCD>]\n");
+	fprintf(stderr, "If an HWND is specified, monitors that specific window; otherwise, monitors all visible top-level windows.\n");
 }
