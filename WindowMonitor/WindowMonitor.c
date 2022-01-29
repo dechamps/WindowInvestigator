@@ -460,7 +460,7 @@ static int WindowMonitor_MonitorAllWindows(void) {
 	state.foregroundWindow = NULL;
 	const HWND window = CreateWindowW(
 		L"WindowInvestigator_WindowMonitor",
-		NULL,
+		L"WindowInvestigator_WindowMonitor",
 		0,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
