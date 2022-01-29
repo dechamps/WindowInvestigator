@@ -20,4 +20,5 @@ target_link_libraries(WindowMonitor
 	PRIVATE dwmapi
 	PRIVATE user32_private
 	PRIVATE winmm
+	PRIVATE avrt
 )

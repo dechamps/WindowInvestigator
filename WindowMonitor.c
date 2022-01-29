@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dwmapi.h>
+#include <avrt.h>
 
 TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "WindowMonitor", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
 
@@ -431,6 +432,10 @@ static void WindowMonitor_DumpTopLevelWindows(void) {
 }
 
 static void WindowMonitor_SetProcessPriority(void) {
+	DWORD taskIndex = 0;
+	if (AvSetMmThreadCharacteristicsW(L"Pro Audio", &taskIndex) == 0)
+		fprintf(stderr, "AvSetMmThreadCharacteristicsW() failed [0x%lx]\n", GetLastError());
+
 	// Note: in practice TaskbarMon needs to run as administrator to get Realtime priority. Otherwise it gets silently demoted to High.
 	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
 		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
