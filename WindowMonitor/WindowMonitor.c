@@ -5,7 +5,7 @@
 #include <dwmapi.h>
 #include <avrt.h>
 
-TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "WindowMonitor", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
+TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "WindowInvestigator_WindowMonitor", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
 
 // Declarations reverse-engineered from twinui.dll
 __declspec(dllimport) BOOL WINAPI IsShellManagedWindow(HWND hwnd);
@@ -449,7 +449,7 @@ static int WindowMonitor_MonitorAllWindows(void) {
 	WNDCLASSEXW windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
 	windowClass.lpfnWndProc = WindowMonitor_WindowProcedure;
-	windowClass.lpszClassName = L"WindowMonitor";
+	windowClass.lpszClassName = L"WindowInvestigator_WindowMonitor";
 
 	if (RegisterClassExW(&windowClass) == 0) {
 		fprintf(stderr, "RegisterClassEx failed [%x]\n", GetLastError());
@@ -459,7 +459,7 @@ static int WindowMonitor_MonitorAllWindows(void) {
 	State state;
 	state.foregroundWindow = NULL;
 	const HWND window = CreateWindowW(
-		L"WindowMonitor",
+		L"WindowInvestigator_WindowMonitor",
 		NULL,
 		0,
 		CW_USEDEFAULT,
