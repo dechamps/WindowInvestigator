@@ -434,6 +434,10 @@ static void WindowMonitor_SetProcessPriority(void) {
 	// Note: in practice TaskbarMon needs to run as administrator to get Realtime priority. Otherwise it gets silently demoted to High.
 	if (!SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS))
 		fprintf(stderr, "Unable to set realtime process priority [0x%lx]\n", GetLastError());
+
+	const MMRESULT timeBeginPeriodResult = timeBeginPeriod(1);
+	if (timeBeginPeriodResult != TIMERR_NOERROR)
+		fprintf(stderr, "timeBeginPeriod() returned error %u\n", timeBeginPeriodResult);
 }
 
 static int WindowMonitor_MonitorAllWindows(void) {
