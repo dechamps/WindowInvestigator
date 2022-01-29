@@ -1,7 +1,20 @@
+#include "../common/tracing.h"
+
 #include <Windows.h>
 #include <stdio.h>
 
+static LRESULT CALLBACK TransparentFullscreenWindow_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
+	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+}
+
 int main() {
+	const HRESULT registerResult = TraceLoggingRegister(WindowInvestigator_traceloggingProvider);
+	if (!SUCCEEDED(registerResult)) {
+		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
+		return EXIT_FAILURE;
+	}
+
 	const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	if (screenWidth == 0) {
 		fprintf(stderr, "GetSystemMetrics(SM_CXFULLSCREEN) failed [%x]\n", GetLastError());
@@ -15,7 +28,7 @@ int main() {
 
 	WNDCLASSEXW windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
-	windowClass.lpfnWndProc = DefWindowProcW;
+	windowClass.lpfnWndProc = TransparentFullscreenWindow_WindowProcedure;
 	windowClass.lpszClassName = L"WindowInvestigator_TransparentFullscreenWindow";
 
 	if (RegisterClassExW(&windowClass) == 0) {
@@ -41,6 +54,8 @@ int main() {
 		fprintf(stderr, "CreateWindowW failed [%x]\n", GetLastError());
 		return EXIT_FAILURE;
 	}
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "TransparentFullscreenWindowCreated", TraceLoggingPointer(window, "HWND"));
 
 	for (;;)
 	{

@@ -1,11 +1,11 @@
+#include "../common/tracing.h"
+
 #include <Windows.h>
 #include <TraceLoggingProvider.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <dwmapi.h>
 #include <avrt.h>
-
-TRACELOGGING_DEFINE_PROVIDER(traceloggingProvider, "WindowInvestigator_WindowMonitor", (0x500d9509, 0x6850, 0x440c, 0xad, 0x11, 0x6e, 0xa6, 0x25, 0xec, 0x91, 0xbc));
 
 // Declarations reverse-engineered from twinui.dll
 __declspec(dllimport) BOOL WINAPI IsShellManagedWindow(HWND hwnd);
@@ -101,35 +101,35 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 	GetClassNameW(window, windowInfo.className, sizeof(windowInfo.className) / sizeof(*windowInfo.className));
 	const DWORD classNameError = GetLastError();
 	if (classNameError != NO_ERROR)
-		TraceLoggingWrite(traceloggingProvider, "classNameError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(classNameError, "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "classNameError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(classNameError, "ErrorCode"));
 
 	SetLastError(NO_ERROR);
 	windowInfo.extendedStyles = (DWORD)GetWindowLongPtrW(window, GWL_EXSTYLE);
 	const DWORD extendedStylesError = GetLastError();
 	if (extendedStylesError != NO_ERROR)
-		TraceLoggingWrite(traceloggingProvider, "extendedStylesError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(extendedStylesError, "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "extendedStylesError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(extendedStylesError, "ErrorCode"));
 
 	SetLastError(NO_ERROR);
 	windowInfo.styles = (DWORD)GetWindowLongPtrW(window, GWL_STYLE);
 	const DWORD stylesError = GetLastError();
 	if (stylesError != NO_ERROR)
-		TraceLoggingWrite(traceloggingProvider, "stylesError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(stylesError, "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "stylesError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(stylesError, "ErrorCode"));
 
 	if (!GetWindowRect(window, &windowInfo.windowRect))
-		TraceLoggingWrite(traceloggingProvider, "windowRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "windowRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	if (!GetClientRect(window, &windowInfo.clientRect))
-		TraceLoggingWrite(traceloggingProvider, "clientRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "clientRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	windowInfo.placement.length = sizeof(windowInfo.placement);
 	if (!GetWindowPlacement(window, &windowInfo.placement))
-		TraceLoggingWrite(traceloggingProvider, "placementError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "placementError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	SetLastError(NO_ERROR);
 	InternalGetWindowText(window, windowInfo.text, sizeof(windowInfo.text) / sizeof(*windowInfo.text));
 	const DWORD textError = GetLastError();
 	if (textError != NO_ERROR)
-		TraceLoggingWrite(traceloggingProvider, "textError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(textError, "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "textError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(textError, "ErrorCode"));
 
 	windowInfo.isShellManagedWindow = IsShellManagedWindow(window);
 
@@ -138,7 +138,7 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 	windowInfo.overpanning = GetPropW(window, (LPCWSTR) (intptr_t) ATOM_OVERPANNING) != NULL;
 
 	if (!GetWindowBand(window, &windowInfo.band))
-		TraceLoggingWrite(traceloggingProvider, "windowBandError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "windowBandError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	windowInfo.hasNonRudeHWNDProperty = GetPropW(window, L"NonRudeHWND") != NULL;
 	
@@ -150,7 +150,7 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 
 	const HRESULT dwmIsCloakedResult = DwmGetWindowAttribute(window, DWMWA_CLOAKED, &windowInfo.dwmIsCloaked, sizeof(windowInfo.dwmIsCloaked));
 	if (!SUCCEEDED(dwmIsCloakedResult))
-		TraceLoggingWrite(traceloggingProvider, "dwmIsCloakedError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexLong(dwmIsCloakedResult, "HRESULT"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "dwmIsCloakedError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexLong(dwmIsCloakedResult, "HRESULT"));
 
 	windowInfo.isIconic = IsIconic(window);
 
@@ -161,97 +161,97 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 
 static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_WindowInfo* oldWindowInfo, const WindowMonitor_WindowInfo* newWindowInfo) {
 	if (wcscmp(oldWindowInfo->className, newWindowInfo->className) != 0)
-		TraceLoggingWrite(traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingWideString(oldWindowInfo->className, "OldClassName"), TraceLoggingWideString(newWindowInfo->className, "NewClassName"));
 
 	if (oldWindowInfo->extendedStyles != newWindowInfo->extendedStyles)
-		TraceLoggingWrite(traceloggingProvider, "WindowExtendedStylesChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowExtendedStylesChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingHexUInt32(oldWindowInfo->extendedStyles, "OldExtendedStyles"), TraceLoggingHexUInt32(newWindowInfo->extendedStyles, "NewExtendedStyles"));
 
 	if (oldWindowInfo->styles != newWindowInfo->styles)
-		TraceLoggingWrite(traceloggingProvider, "WindowStylesChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowStylesChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingHexUInt32(oldWindowInfo->styles, "OldStyles"), TraceLoggingHexUInt32(newWindowInfo->styles, "NewStyles"));
 
 	if (!EqualRect(&oldWindowInfo->windowRect, &newWindowInfo->windowRect))
-		TraceLoggingWrite(traceloggingProvider, "WindowRectChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowRectChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingLong(oldWindowInfo->windowRect.left, "OldWindowRectLeft"), TraceLoggingLong(oldWindowInfo->windowRect.top, "OldWindowRectTop"),
 			TraceLoggingLong(oldWindowInfo->windowRect.right, "OldWindowRectRight"), TraceLoggingLong(oldWindowInfo->windowRect.bottom, "OldWindowRectBottom"),
 			TraceLoggingLong(newWindowInfo->windowRect.left, "NewWindowRectLeft"), TraceLoggingLong(newWindowInfo->windowRect.top, "NewWindowRectTop"),
 			TraceLoggingLong(newWindowInfo->windowRect.right, "NewWindowRectRight"), TraceLoggingLong(newWindowInfo->windowRect.bottom, "NewWindowRectBottom"));
 
 	if (!EqualRect(&oldWindowInfo->clientRect, &newWindowInfo->clientRect))
-		TraceLoggingWrite(traceloggingProvider, "WindowClientRectChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClientRectChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingLong(oldWindowInfo->clientRect.left, "OldClientRectLeft"), TraceLoggingLong(oldWindowInfo->clientRect.top, "OldClientRectTop"),
 			TraceLoggingLong(oldWindowInfo->clientRect.right, "OldClientRectRight"), TraceLoggingLong(oldWindowInfo->clientRect.bottom, "OldClientRectBottom"),
 			TraceLoggingLong(newWindowInfo->clientRect.left, "NewClientRectLeft"), TraceLoggingLong(newWindowInfo->clientRect.top, "NewClientRectTop"),
 			TraceLoggingLong(newWindowInfo->clientRect.right, "NewClientRectRight"), TraceLoggingLong(newWindowInfo->clientRect.bottom, "NewClientRectBottom"));
 
 	if (oldWindowInfo->placement.showCmd != newWindowInfo->placement.showCmd)
-		TraceLoggingWrite(traceloggingProvider, "PlacementShowCmdChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementShowCmdChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingUInt32(oldWindowInfo->placement.showCmd, "OldShowCmd"), TraceLoggingUInt32(newWindowInfo->placement.showCmd, "NewShowCmd"));
 	if (oldWindowInfo->placement.ptMinPosition.x != newWindowInfo->placement.ptMinPosition.x ||
 		oldWindowInfo->placement.ptMinPosition.y != newWindowInfo->placement.ptMinPosition.y)
-		TraceLoggingWrite(traceloggingProvider, "PlacementMinPositionChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementMinPositionChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingLong(oldWindowInfo->placement.ptMinPosition.x, "OldMinPositionX"), TraceLoggingLong(oldWindowInfo->placement.ptMinPosition.y, "OldMinPositionY"),
 			TraceLoggingLong(newWindowInfo->placement.ptMinPosition.x, "NewMinPositionX"), TraceLoggingLong(newWindowInfo->placement.ptMinPosition.y, "NewMinPositionY"));
 	if (oldWindowInfo->placement.ptMaxPosition.x != newWindowInfo->placement.ptMaxPosition.x ||
 		oldWindowInfo->placement.ptMaxPosition.y != newWindowInfo->placement.ptMaxPosition.y)
-		TraceLoggingWrite(traceloggingProvider, "PlacementMaxPositionChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementMaxPositionChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingLong(oldWindowInfo->placement.ptMaxPosition.x, "OldMaxPositionX"), TraceLoggingLong(oldWindowInfo->placement.ptMaxPosition.y, "OldMaxPositionY"),
 			TraceLoggingLong(newWindowInfo->placement.ptMaxPosition.x, "NewMaxPositionX"), TraceLoggingLong(newWindowInfo->placement.ptMaxPosition.y, "NewMaxPositionY"));
 	if (!EqualRect(&oldWindowInfo->placement.rcNormalPosition, &newWindowInfo->placement.rcNormalPosition))
-		TraceLoggingWrite(traceloggingProvider, "PlacementClientRectChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementClientRectChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.left, "OldClientRectLeft"), TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.top, "OldClientRectTop"),
 			TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.right, "OldClientRectRight"), TraceLoggingLong(oldWindowInfo->placement.rcNormalPosition.bottom, "OldClientRectBottom"),
 			TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.left, "NewClientRectLeft"), TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.top, "NewClientRectTop"),
 			TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.right, "NewClientRectRight"), TraceLoggingLong(newWindowInfo->placement.rcNormalPosition.bottom, "NewClientRectBottom"));
 
 	if (wcscmp(oldWindowInfo->text, newWindowInfo->text) != 0)
-		TraceLoggingWrite(traceloggingProvider, "WindowTextChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowTextChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingWideString(oldWindowInfo->text, "OldWindowText"), TraceLoggingWideString(newWindowInfo->text, "NewWindowText"));
 
 	if (oldWindowInfo->isShellManagedWindow != newWindowInfo->isShellManagedWindow)
-		TraceLoggingWrite(traceloggingProvider, "WindowIsShellManagedWindowChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsShellManagedWindowChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->isShellManagedWindow, "OldIsShellManagedWindow"), TraceLoggingBool(newWindowInfo->isShellManagedWindow, "NewIsShellManagedWindow"));
 
 	if (oldWindowInfo->isShellFrameWindow != newWindowInfo->isShellFrameWindow)
-		TraceLoggingWrite(traceloggingProvider, "WindowIsShellFrameWindowChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsShellFrameWindowChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->isShellFrameWindow, "OldIsShellFrameWindow"), TraceLoggingBool(newWindowInfo->isShellFrameWindow, "NewIsShellFrameWindow"));
 
 	if (oldWindowInfo->overpanning != newWindowInfo->overpanning)
-		TraceLoggingWrite(traceloggingProvider, "WindowOverpanningChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowOverpanningChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->overpanning, "OldOverpanning"), TraceLoggingBool(newWindowInfo->overpanning, "NewOverpanning"));
 
 	if (oldWindowInfo->band != newWindowInfo->band)
-		TraceLoggingWrite(traceloggingProvider, "WindowBandChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowBandChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingUInt32(oldWindowInfo->band, "OldBand"), TraceLoggingUInt32(newWindowInfo->band, "NewBand"));
 
 	if (oldWindowInfo->hasNonRudeHWNDProperty != newWindowInfo->hasNonRudeHWNDProperty)
-		TraceLoggingWrite(traceloggingProvider, "WindowHasNonRudeHWNDPropertyChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasNonRudeHWNDPropertyChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->hasNonRudeHWNDProperty, "OldHasNonRudeHWNDProperty"), TraceLoggingBool(newWindowInfo->hasNonRudeHWNDProperty, "NewHasNonRudeHWNDProperty"));
 
 	if (oldWindowInfo->hasLivePreviewWindowProperty != newWindowInfo->hasLivePreviewWindowProperty)
-		TraceLoggingWrite(traceloggingProvider, "WindowHasLivePreviewWindowPropertyChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasLivePreviewWindowPropertyChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->hasLivePreviewWindowProperty, "OldHasLivePreviewWindowProperty"), TraceLoggingBool(newWindowInfo->hasLivePreviewWindowProperty, "NewHasLivePreviewWindowProperty"));
 
 	if (oldWindowInfo->hasTreatAsDesktopFullscreenProperty != newWindowInfo->hasTreatAsDesktopFullscreenProperty)
-		TraceLoggingWrite(traceloggingProvider, "WindowHasTreatAsDesktopFullscreenPropertyChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasTreatAsDesktopFullscreenPropertyChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->hasTreatAsDesktopFullscreenProperty, "OldHasTreatAsDesktopFullscreenProperty"), TraceLoggingBool(newWindowInfo->hasTreatAsDesktopFullscreenProperty, "NewHasTreatAsDesktopFullscreenProperty"));
 
 	if (oldWindowInfo->isWindow != newWindowInfo->isWindow)
-		TraceLoggingWrite(traceloggingProvider, "WindowIsWindowChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsWindowChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->isWindow, "OldIsWindow"), TraceLoggingBool(newWindowInfo->isWindow, "NewIsWindow"));
 
 	if (oldWindowInfo->dwmIsCloaked != newWindowInfo->dwmIsCloaked)
-		TraceLoggingWrite(traceloggingProvider, "WindowDwmIsCloakedChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowDwmIsCloakedChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingUInt32(oldWindowInfo->dwmIsCloaked, "OldDwmIsCloaked"), TraceLoggingUInt32(newWindowInfo->dwmIsCloaked, "NewDwmIsCloaked"));
 
 	if (oldWindowInfo->isIconic != newWindowInfo->isIconic)
-		TraceLoggingWrite(traceloggingProvider, "WindowIsIconicChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsIconicChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->isIconic, "OldIsIconic"), TraceLoggingBool(newWindowInfo->isIconic, "NewIsIconic"));
 
 	if (oldWindowInfo->isVisible != newWindowInfo->isVisible)
-		TraceLoggingWrite(traceloggingProvider, "WindowIsVisibleChanged", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsVisibleChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->isVisible, "OldIsVisible"), TraceLoggingBool(newWindowInfo->isVisible, "NewIsVisible"));
 }
 
@@ -307,7 +307,7 @@ static void WindowMonitor_RemoveUnseenWindows(WindowMonitor_Window** nextWindow)
 			continue;
 		}
 		
-		TraceLoggingWrite(traceloggingProvider, "WindowGone", TraceLoggingPointer(window->window, "HWND"));
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowGone", TraceLoggingPointer(window->window, "HWND"));
 		*nextWindow = window->next;
 		free(window);
 	}
@@ -328,7 +328,7 @@ static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND windo
 		WindowMonitor_Window** const existingWindow = WindowMonitor_SearchWindow(state->window, window);
 		WindowMonitor_Window* const previousWindow = *state->window;
 		if (*existingWindow == NULL) {
-			TraceLoggingWrite(traceloggingProvider, "NewWindow", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
+			TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "NewWindow", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
 			WindowMonitor_Window* const newWindow = *state->window = malloc(sizeof(**state->window));
 			if (newWindow == NULL) abort();
 			newWindow->window = window;
@@ -336,7 +336,7 @@ static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND windo
 			isNewWindow = TRUE;
 		}
 		else {
-			TraceLoggingWrite(traceloggingProvider, "WindowZOrderChanged", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
+			TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowZOrderChanged", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
 			*state->window = *existingWindow;
 			*existingWindow = (*existingWindow)->next;
 		}
@@ -374,13 +374,13 @@ static void WindowMonitor_LogTopLevelWindows(State* const state) {
 }
 
 static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	TraceLoggingWrite(traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
 
 	if (uMsg == WM_CREATE) WindowMonitor_OnWindowCreate(hWnd, lParam);
 
 	State* const state = WindowMonitor_GetWindowState(hWnd);
 	if (state != NULL) WindowMonitor_LogTopLevelWindows(state);
-	TraceLoggingWrite(traceloggingProvider, "Done");
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Done");
 
 	if (SetTimer(hWnd, 1, USER_TIMER_MINIMUM, NULL) == 0) {
 		fprintf(stderr, "SetTimer failed() [0x%x]\n", GetLastError());
@@ -500,7 +500,7 @@ static int WindowMonitor_MonitorAllWindows(void) {
 
 	WindowMonitor_DumpTopLevelWindows();
 
-	TraceLoggingWrite(traceloggingProvider, "Started", TraceLoggingHexUInt32(shellhookMessage));
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Started", TraceLoggingHexUInt32(shellhookMessage));
 
 	for (;;)
 	{
@@ -528,9 +528,9 @@ static int WindowMonitor_MonitorSingleWindow(HWND window) {
 	WindowMonitor_DumpWindow(window, &windowInfo);
 
 	for (;;) {
-		TraceLoggingWrite(traceloggingProvider, "Start");
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Start");
 		const WindowMonitor_WindowInfo newWindowInfo = WindowMonitor_GetWindowInfo(window);
-		TraceLoggingWrite(traceloggingProvider, "Done");
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Done");
 		WindowMonitor_DiffWindowInfo(window, &windowInfo, &newWindowInfo);
 
 		windowInfo = newWindowInfo;
@@ -541,7 +541,7 @@ static int WindowMonitor_MonitorSingleWindow(HWND window) {
 int wmain(int argc, const wchar_t* const* const argv, const wchar_t* const* const envp) {
 	UNREFERENCED_PARAMETER(envp);
 
-	const HRESULT registerResult = TraceLoggingRegister(traceloggingProvider);
+	const HRESULT registerResult = TraceLoggingRegister(WindowInvestigator_traceloggingProvider);
 	if (!SUCCEEDED(registerResult)) {
 		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
 		return EXIT_FAILURE;

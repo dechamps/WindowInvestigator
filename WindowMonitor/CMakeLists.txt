@@ -12,6 +12,7 @@ set_target_properties(user32_private PROPERTIES IMPORTED_IMPLIB "${CMAKE_CURRENT
 
 add_executable(WindowMonitor "WindowMonitor.c")
 target_link_libraries(WindowMonitor
+	PRIVATE tracing
 	PRIVATE dwmapi
 	PRIVATE user32_private
 	PRIVATE winmm
