@@ -3,3 +3,4 @@ target_link_libraries(WindowInvestigator_TransparentFullscreenWindow
 	PRIVATE WindowInvestigator_tracing
 )
 set_property(TARGET WindowInvestigator_TransparentFullscreenWindow PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+install(TARGETS WindowInvestigator_TransparentFullscreenWindow RUNTIME)

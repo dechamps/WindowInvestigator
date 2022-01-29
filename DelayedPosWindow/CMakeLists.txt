@@ -4,3 +4,4 @@ target_link_libraries(WindowInvestigator_DelayedPosWindow
 	PRIVATE WindowInvestigator_window_util
 )
 set_property(TARGET WindowInvestigator_DelayedPosWindow PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+install(TARGETS WindowInvestigator_DelayedPosWindow RUNTIME)
