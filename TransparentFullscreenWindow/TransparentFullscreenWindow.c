@@ -5,6 +5,17 @@
 
 static LRESULT CALLBACK TransparentFullscreenWindow_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
+
+	if (uMsg == WM_CREATE) {
+		SetLastError(NO_ERROR);
+		SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
+		const DWORD setWindowLongError = GetLastError();
+		if (setWindowLongError != NO_ERROR) {
+			fprintf(stderr, "SetWindowLongPtrW(GWLP_USERDATA) failed [0x%x]\n", setWindowLongError);
+			exit(EXIT_FAILURE);
+		}
+	}
+
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 

@@ -1,0 +1,5 @@
+add_executable(WindowInvestigator_DelayedPosWindow "DelayedPosWindow.c")
+target_link_libraries(WindowInvestigator_DelayedPosWindow
+	PRIVATE WindowInvestigator_tracing
+	PRIVATE WindowInvestigator_window_util
+)

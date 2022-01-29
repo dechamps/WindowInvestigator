@@ -1,5 +1,6 @@
 #include "../common/tracing.h"
 #include "../common/user32_private.h"
+#include "../common/window_util.h"
 
 #include <Windows.h>
 #include <TraceLoggingProvider.h>
@@ -261,27 +262,6 @@ typedef struct {
 	WindowMonitor_Window* foregroundWindow;
 } State;
 
-static void WindowMonitor_OnWindowCreate(HWND window, LPARAM lParam) {
-	SetLastError(NO_ERROR);
-	SetWindowLongPtrW(window, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
-	const DWORD setWindowLongError = GetLastError();
-	if (setWindowLongError != NO_ERROR) {
-		fprintf(stderr, "SetWindowLongPtrW(GWLP_USERDATA) failed [0x%x]\n", setWindowLongError);
-		exit(EXIT_FAILURE);
-	}
-}
-
-static State* WindowMonitor_GetWindowState(HWND window) {
-	SetLastError(NO_ERROR);
-	State* state = (State*)GetWindowLongPtrW(window, GWLP_USERDATA);
-	const DWORD getWindowLongError = GetLastError();
-	if (getWindowLongError != NO_ERROR) {
-		fprintf(stderr, "GetWindowLongPtrW(GWLP_USERDATA) failed [0x%x]\n", getWindowLongError);
-		exit(EXIT_FAILURE);
-	}
-	return state;
-}
-
 static WindowMonitor_Window** WindowMonitor_SearchWindow(WindowMonitor_Window** window, HWND match) {
 	for (; *window != NULL && (*window)->window != match; window = &(*window)->next);
 	return window;
@@ -369,9 +349,9 @@ static void WindowMonitor_LogTopLevelWindows(State* const state) {
 static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
 
-	if (uMsg == WM_CREATE) WindowMonitor_OnWindowCreate(hWnd, lParam);
+	if (uMsg == WM_CREATE) WindowInvestigator_SetWindowUserDataOnCreate(hWnd, lParam);
 
-	State* const state = WindowMonitor_GetWindowState(hWnd);
+	State* const state = (State*)WindowInvestigator_GetWindowUserData(hWnd);
 	if (state != NULL) WindowMonitor_LogTopLevelWindows(state);
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Done");
 
