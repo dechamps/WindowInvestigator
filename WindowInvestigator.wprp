@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+	<Profiles>
+		<EventCollector Id="EventCollector_WindowInvestigator" Name="WindowInvestigator" />
+		<Profile Id="WindowInvestigator.Verbose.File" Name="WindowInvestigator" Description="WindowInvestigator" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors>
+				<EventCollectorId Value="EventCollector_WindowInvestigator">
+					<EventProviders>
+						<EventProvider Id="EventProvider_WindowInvestigator" Name="500D9509-6850-440C-AD11-6EA625EC91BC" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="WindowInvestigator.Verbose.Memory" Base="WindowInvestigator.Verbose.File" LoggingMode="Memory" Name="WindowInvestigator" Description="WindowInvestigator" DetailLevel="Verbose" />
+	</Profiles>
+</WindowsPerformanceRecorder>
