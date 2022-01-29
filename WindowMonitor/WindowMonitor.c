@@ -387,7 +387,7 @@ static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		exit(EXIT_FAILURE);
 	}
 
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 static void WindowMonitor_DumpWindow(HWND window, const WindowMonitor_WindowInfo* windowInfo) {
