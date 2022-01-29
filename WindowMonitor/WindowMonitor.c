@@ -459,17 +459,17 @@ static int WindowMonitor_MonitorAllWindows(void) {
 	State state;
 	state.foregroundWindow = NULL;
 	const HWND window = CreateWindowW(
-		L"WindowInvestigator_WindowMonitor",
-		L"WindowInvestigator_WindowMonitor",
-		0,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		HWND_MESSAGE,
-		NULL,
-		NULL,
-		&state
+		/*lpClassName=*/L"WindowInvestigator_WindowMonitor",
+		/*lpWindowName=*/L"WindowInvestigator_WindowMonitor",
+		/*dwStyle=*/0,
+		/*X=*/CW_USEDEFAULT,
+		/*Y=*/CW_USEDEFAULT,
+		/*nWidth=*/CW_USEDEFAULT,
+		/*nHeight=*/CW_USEDEFAULT,
+		/*hWndParent=*/HWND_MESSAGE,
+		/*hMenu=*/NULL,
+		/*hInstance=*/NULL,
+		/*lpParam=*/&state
 	);
 	if (window == NULL) {
 		fprintf(stderr, "CreateWindowW failed [%x]\n", GetLastError());
