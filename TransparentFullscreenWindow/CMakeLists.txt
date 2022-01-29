@@ -1,4 +1,4 @@
-add_executable(TransparentFullscreenWindow "TransparentFullscreenWindow.c")
-target_link_libraries(TransparentFullscreenWindow
-	PRIVATE tracing
+add_executable(WindowInvestigator_TransparentFullscreenWindow "TransparentFullscreenWindow.c")
+target_link_libraries(WindowInvestigator_TransparentFullscreenWindow
+	PRIVATE WindowInvestigator_tracing
 )

@@ -1,4 +1,5 @@
 #include "../common/tracing.h"
+#include "../common/user32_private.h"
 
 #include <Windows.h>
 #include <TraceLoggingProvider.h>
@@ -6,13 +7,6 @@
 #include <stdlib.h>
 #include <dwmapi.h>
 #include <avrt.h>
-
-// Declarations reverse-engineered from twinui.dll
-__declspec(dllimport) BOOL WINAPI IsShellManagedWindow(HWND hwnd);
-__declspec(dllimport) BOOL WINAPI IsShellFrameWindow(HWND hwnd);
-static const ATOM ATOM_OVERPANNING = 0xa91d;
-// https://blog.adeltax.com/window-z-order-in-windows-10/
-__declspec(dllimport) BOOL WINAPI GetWindowBand(HWND hWnd, PDWORD pdwBand);
 
 typedef struct {
 	// RudeWindowWin32Functions::GetClassNameW()

@@ -1,4 +1,4 @@
-; Private, undocumented user32.dll functions used by WindowMonitor.
+; Private, undocumented user32.dll functions used by WindowInvestigator.
 ; These are exported by user32.dll, but are not present in the Microsoft-provided import library, so we need to define the DLL imports ourselves.
 LIBRARY user32
 EXPORTS
