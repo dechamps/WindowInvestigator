@@ -279,7 +279,6 @@ static State* WindowMonitor_GetWindowState(HWND window) {
 		fprintf(stderr, "GetWindowLongPtrW(GWLP_USERDATA) failed [0x%x]\n", getWindowLongError);
 		exit(EXIT_FAILURE);
 	}
-	DWMWA_CLOAKED;
 	return state;
 }
 
