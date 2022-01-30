@@ -349,16 +349,18 @@ static void WindowMonitor_LogTopLevelWindows(State* const state) {
 static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "ReceivedMessage", TraceLoggingHexUInt32(uMsg, "uMsg"), TraceLoggingHexUInt64(wParam, "wParam"), TraceLoggingHexUInt64(lParam, "lParam"));
 
-	if (uMsg == WM_CREATE) WindowInvestigator_SetWindowUserDataOnCreate(hWnd, lParam);
+	if (uMsg == WM_CREATE) {
+		WindowInvestigator_SetWindowUserDataOnCreate(hWnd, lParam);
+
+		if (SetTimer(hWnd, 1, USER_TIMER_MINIMUM, NULL) == 0) {
+			fprintf(stderr, "SetTimer failed() [0x%x]\n", GetLastError());
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	State* const state = (State*)WindowInvestigator_GetWindowUserData(hWnd);
 	if (state != NULL) WindowMonitor_LogTopLevelWindows(state);
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Done");
-
-	if (SetTimer(hWnd, 1, USER_TIMER_MINIMUM, NULL) == 0) {
-		fprintf(stderr, "SetTimer failed() [0x%x]\n", GetLastError());
-		exit(EXIT_FAILURE);
-	}
 
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
