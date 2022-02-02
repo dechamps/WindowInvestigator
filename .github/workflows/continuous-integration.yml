@@ -9,8 +9,14 @@ jobs:
           - msvc_config: x64-Release
             msvc_arch: amd64
             build_type: RelWithDebInfo
+          - msvc_config: x86-Release
+            msvc_arch: amd64_x86
+            build_type: RelWithDebInfo
           - msvc_config: x64-Debug
             msvc_arch: amd64
+            build_type: Debug
+          - msvc_config: x86-Debug
+            msvc_arch: amd64_x86
             build_type: Debug
     steps:
       - uses: actions/checkout@v2
