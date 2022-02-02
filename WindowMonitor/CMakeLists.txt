@@ -7,5 +7,4 @@ target_link_libraries(WindowInvestigator_WindowMonitor
 	PRIVATE winmm
 	PRIVATE avrt
 )
-set_property(TARGET WindowInvestigator_WindowMonitor PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 install(TARGETS WindowInvestigator_WindowMonitor RUNTIME)
