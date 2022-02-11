@@ -26,7 +26,8 @@ provider GUID is `F84AA759-31D3-59BF-2C89-3748CF17FD7E`.
 You can use this GUID in event consumers to receive the log. For example you
 can enter the GUID directly in [TraceView][] for real time logging, or you can
 load the included [`WindowManagementLogging.wprp`][] [recording profile][] into
-the [Windows Performance Recorder (WPR)][] for a more thorough analysis.
+the [Windows Performance Recorder (WPR)][] for a more thorough analysis. The
+Provider Name will appear as `Microsoft-Windows-Desktop-Shell-Windowing`.
 
 ## WindowMonitor
 
@@ -53,7 +54,8 @@ arguments, it will:
   - The provider GUID is `500D9509-6850-440C-AD11-6EA625EC91BC`. You can enter
     that GUID directly in [TraceView][] for real time logging, or you can load
     the included [`WindowInvestigator.wprp`][] [recording profile][] into the
-    [Windows Performance Recorder (WPR)][] for a more thorough analysis.
+    [Windows Performance Recorder (WPR)][] for a more thorough analysis. The
+    Provider Name will appear as `WindowInvestigator`.
 - In addition to logging the message itself, every time a message is received,
   WindowMonitor will go through every visible window and log any changes that
   may have occurred to any of the watched window properties (e.g. styles,
