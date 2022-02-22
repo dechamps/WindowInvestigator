@@ -40,6 +40,7 @@ typedef struct {
 	// RudeWindowWin32Functions::IsValidDesktopFullscreenWindow() (also isShellManagedWindow)
 	DWORD band;
 	BOOL hasNonRudeHWNDProperty;
+	BOOL hasNonRudeAddedByRudeWindowFixerProperty;
 	BOOL hasLivePreviewWindowProperty;
 	BOOL hasTreatAsDesktopFullscreenProperty;
 	
@@ -81,6 +82,7 @@ static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowI
 	printf("Overpanning: %s\n", windowInfo->overpanning ? "TRUE" : "FALSE");
 	printf("Band: %lu\n", windowInfo->band);
 	printf("Has \"NonRudeHWND\" property: %s\n", windowInfo->hasNonRudeHWNDProperty ? "TRUE" : "FALSE");
+	printf("Has non-rude added by RudeWindowFixer property: %s\n", windowInfo->hasNonRudeAddedByRudeWindowFixerProperty ? "TRUE" : "FALSE");
 	printf("Has \"LivePreviewWindow\" property: %s\n", windowInfo->hasLivePreviewWindowProperty ? "TRUE" : "FALSE");
 	printf("Has \"TreatAsDesktopFullscreen\" property: %s\n", windowInfo->hasTreatAsDesktopFullscreenProperty ? "TRUE" : "FALSE");
 	printf("Is window: %s\n", windowInfo->isWindow ? "TRUE" : "FALSE");
@@ -136,6 +138,8 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "windowBandError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
 
 	windowInfo.hasNonRudeHWNDProperty = GetPropW(window, L"NonRudeHWND") != NULL;
+
+	windowInfo.hasNonRudeAddedByRudeWindowFixerProperty = GetPropW(window, L"NonRudeHWND was set by https://github.com/dechamps/RudeWindowFixer") != NULL;
 	
 	windowInfo.hasLivePreviewWindowProperty = GetPropW(window, L"LivePreviewWindow") != NULL;
 
@@ -224,6 +228,10 @@ static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_Window
 	if (oldWindowInfo->hasNonRudeHWNDProperty != newWindowInfo->hasNonRudeHWNDProperty)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasNonRudeHWNDPropertyChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingBool(oldWindowInfo->hasNonRudeHWNDProperty, "OldHasNonRudeHWNDProperty"), TraceLoggingBool(newWindowInfo->hasNonRudeHWNDProperty, "NewHasNonRudeHWNDProperty"));
+
+	if (oldWindowInfo->hasNonRudeAddedByRudeWindowFixerProperty != newWindowInfo->hasNonRudeAddedByRudeWindowFixerProperty)
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasNonRudeAddedByRudeWindowFixerPropertyChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingBool(oldWindowInfo->hasNonRudeAddedByRudeWindowFixerProperty, "OldHasNonRudeAddedByRudeWindowFixerProperty"), TraceLoggingBool(newWindowInfo->hasNonRudeAddedByRudeWindowFixerProperty, "NewHasNonRudeAddedByRudeWindowFixerProperty"));
 
 	if (oldWindowInfo->hasLivePreviewWindowProperty != newWindowInfo->hasLivePreviewWindowProperty)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasLivePreviewWindowPropertyChanged", TraceLoggingPointer(window, "HWND"),
