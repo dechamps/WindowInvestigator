@@ -1,0 +1,2 @@
+add_executable(WindowInvestigator_BroadcastShellHookMessage "BroadcastShellHookMessage.c")
+install(TARGETS WindowInvestigator_BroadcastShellHookMessage RUNTIME)

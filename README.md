@@ -106,6 +106,27 @@ a "sneaky" full screen window such as the GeForce Experience overlay window.
 Note that this tool has only been tested in a single-monitor setup. The
 dimensions of the window might be incorrect on a multi-monitor setup.
 
+## BroadcastShellHookMessage
+
+This command line tool [broadcasts][] arbitrary [shell hook messages][]. The
+main purpose is to deliver a message to the Rude Window Manager. The window that
+the Rude Window Manager listens on is a bit hard to find - it's one of several
+`WorkerW` windows under the desktop window of `explorer.exe`. Broadcasting is a
+quick and dirty way of getting the message across without having to find the
+window.
+
+The program takes two hexadecimal arguments which are the values to send as
+`wParam` and `lParam`, in this order.
+
+Here's a few examples of command line parameters:
+
+- `0x16 0x0` sends `HSHELL_MONITORCHANGED` with a null window, which simply
+  compels the Rude Window Manager to recalculate its state.
+- `0x35 0x4242` will compel the Rude Window Manager to add window handle
+  `0x4242` to its set of full screen windows.
+- `0x36 0x4242` will compel the Rude Window Manager to remove window handle
+  `0x4242` to its set of full screen windows.
+
 ## Other recommended tools
 
 - [GuiPropView][] is a nice tool for looking at window properties in general.
@@ -130,6 +151,7 @@ There are no dependencies besides the Windows SDK.
 
 [`ABN_FULLSCREENAPP`]: https://docs.microsoft.com/en-us/windows/win32/shell/abn-fullscreenapp
 [appbar]: https://docs.microsoft.com/en-us/windows/win32/shell/application-desktop-toolbars
+[broadcasts]: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-broadcastsystemmessage
 [Etienne Dechamps]: mailto:etienne@edechamps.fr
 [`EnumWindows()`]: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumwindows
 [Event Tracing for Windows (ETW)]: https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing
