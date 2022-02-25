@@ -98,10 +98,14 @@ provider details are the same as WindowMonitor.
 
 ## TransparentFullscreenWindow
 
-This trivial tool simply displays a window that has the `WS_EX_LAYERED` and
-`WS_EX_TRANSPARENT` [extended window styles][]. It also makes the window full
-screen by setting its dimensions to be the same as the screen. This emulates
-a "sneaky" full screen window such as the GeForce Experience overlay window.
+This trivial command line tool simply displays a window that has the
+`WS_EX_LAYERED` and `WS_EX_TRANSPARENT` [extended window styles][]. It also
+makes the window full screen by setting its dimensions to be the same as the
+screen. This emulates a "sneaky" full screen window such as the GeForce
+Experience overlay window.
+
+If you pass the `"topmost"` command line parameter, the full screen window will
+also have the `WS_EX_TOPMOST` style, i.e. it will be "always on top".
 
 Note that this tool has only been tested in a single-monitor setup. The
 dimensions of the window might be incorrect on a multi-monitor setup.

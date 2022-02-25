@@ -19,7 +19,21 @@ static LRESULT CALLBACK TransparentFullscreenWindow_WindowProcedure(HWND hWnd, U
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
-int main() {
+static void TransparentFullscreenWindow_Usage() {
+	fwprintf(stderr, L"usage: TransparentFullscreenWindow [topmost]\n");
+	exit(EXIT_FAILURE);
+}
+
+int wmain(int argc, const wchar_t* const* const argv, const wchar_t* const* const envp) {
+	UNREFERENCED_PARAMETER(envp);
+
+	if (argc > 2) TransparentFullscreenWindow_Usage();
+	DWORD additionalExtendedStyles = 0;
+	if (argc == 2) {
+		if (wcscmp(argv[1], L"topmost") == 0) additionalExtendedStyles |= WS_EX_TOPMOST;
+		else TransparentFullscreenWindow_Usage();
+	}
+
 	const HRESULT registerResult = TraceLoggingRegister(WindowInvestigator_traceloggingProvider);
 	if (!SUCCEEDED(registerResult)) {
 		fprintf(stderr, "Unable to register tracing provider [0x%lx]\n", registerResult);
@@ -48,7 +62,7 @@ int main() {
 	}
 
 	const HWND window = CreateWindowExW(
-		/*dwExtStyle=*/WS_EX_LAYERED | WS_EX_TRANSPARENT,
+		/*dwExtStyle=*/WS_EX_LAYERED | WS_EX_TRANSPARENT | additionalExtendedStyles,
 		/*lpClassName=*/L"WindowInvestigator_TransparentFullscreenWindow",
 		/*lpWindowName=*/L"WindowInvestigator_TransparentFullscreenWindow",
 		/*dwStyle=*/WS_VISIBLE,
