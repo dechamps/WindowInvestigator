@@ -170,6 +170,83 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 	return windowInfo;
 }
 
+static void WindowMonitor_LogWindowInfo(HWND window, const WindowMonitor_WindowInfo* windowInfo) {
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowLogStart", TraceLoggingPointer(window, "HWND"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassName", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWideString(windowInfo->className, "ClassName"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowExtendedStyles", TraceLoggingPointer(window, "HWND"),
+		 TraceLoggingHexUInt32(windowInfo->extendedStyles, "ExtendedStyles"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowStyles", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingHexUInt32(windowInfo->styles, "Styles"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowRect", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->windowRect.left, "WindowRectLeft"), TraceLoggingLong(windowInfo->windowRect.top, "WindowRectTop"),
+		TraceLoggingLong(windowInfo->windowRect.right, "WindowRectRight"), TraceLoggingLong(windowInfo->windowRect.bottom, "WindowRectBottom"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClientRect", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->clientRect.left, "ClientRectLeft"), TraceLoggingLong(windowInfo->clientRect.top, "ClientRectTop"),
+		TraceLoggingLong(windowInfo->clientRect.right, "ClientRectRight"), TraceLoggingLong(windowInfo->clientRect.bottom, "ClientRectBottom"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClientRectInScreenCoordinates", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->clientRectInScreenCoordinates.left, "ClientRectInScreenCoordinatesLeft"), TraceLoggingLong(windowInfo->clientRectInScreenCoordinates.top, "ClientRectInScreenCoordinatesTop"),
+		TraceLoggingLong(windowInfo->clientRectInScreenCoordinates.right, "ClientRectInScreenCoordinatesRight"), TraceLoggingLong(windowInfo->clientRectInScreenCoordinates.bottom, "ClientRectInScreenCoordinatesBottom"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementShowCmd", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingUInt32(windowInfo->placement.showCmd, "ShowCmd"));
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementMinPosition", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->placement.ptMinPosition.x, "MinPositionX"), TraceLoggingLong(windowInfo->placement.ptMinPosition.y, "MinPositionY"),
+		TraceLoggingLong(windowInfo->placement.ptMinPosition.x, "MinPositionX"), TraceLoggingLong(windowInfo->placement.ptMinPosition.y, "MinPositionY"));
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementMaxPosition", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->placement.ptMaxPosition.x, "MaxPositionX"), TraceLoggingLong(windowInfo->placement.ptMaxPosition.y, "MaxPositionY"));
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementClientRect", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingLong(windowInfo->placement.rcNormalPosition.left, "ClientRectLeft"), TraceLoggingLong(windowInfo->placement.rcNormalPosition.top, "ClientRectTop"),
+		TraceLoggingLong(windowInfo->placement.rcNormalPosition.right, "ClientRectRight"), TraceLoggingLong(windowInfo->placement.rcNormalPosition.bottom, "ClientRectBottom"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowText", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingWideString(windowInfo->text, "WindowText"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsShellManagedWindow", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->isShellManagedWindow, "IsShellManagedWindow"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsShellFrameWindow", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->isShellFrameWindow, "IsShellFrameWindow"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowOverpanning", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->overpanning, "Overpanning"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowBand", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingUInt32(windowInfo->band, "Band"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasNonRudeHWNDProperty", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->hasNonRudeHWNDProperty, "HasNonRudeHWNDProperty"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasNonRudeAddedByRudeWindowFixerProperty", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->hasNonRudeAddedByRudeWindowFixerProperty, "HasNonRudeAddedByRudeWindowFixerProperty"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasLivePreviewWindowProperty", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->hasLivePreviewWindowProperty, "HasLivePreviewWindowProperty"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowHasTreatAsDesktopFullscreenProperty", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->hasTreatAsDesktopFullscreenProperty, "HasTreatAsDesktopFullscreenProperty"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsWindow", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->isWindow, "IsWindow"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowDwmIsCloaked", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingUInt32(windowInfo->dwmIsCloaked, "DwmIsCloaked"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsIconic", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->isIconic, "IsIconic"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowIsVisible", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingBool(windowInfo->isVisible, "IsVisible"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowLogEnd", TraceLoggingPointer(window, "HWND"));
+}
+
 static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_WindowInfo* oldWindowInfo, const WindowMonitor_WindowInfo* newWindowInfo) {
 	if (wcscmp(oldWindowInfo->className, newWindowInfo->className) != 0)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
@@ -346,7 +423,8 @@ static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND windo
 	WindowMonitor_Window* currentWindow = *state->window;
 
 	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
-	if (!isNewWindow) WindowMonitor_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
+	if (isNewWindow) WindowMonitor_LogWindowInfo(window, &windowInfo);
+	else WindowMonitor_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
 	currentWindow->info = windowInfo;
 
 	if (currentWindow->seen) {
