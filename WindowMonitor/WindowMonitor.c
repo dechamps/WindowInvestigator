@@ -22,6 +22,7 @@ typedef struct {
 	// RudeWindowWin32Functions::GetWindowRectForFullscreenCheck()
 	RECT windowRect;
 	RECT clientRect;
+	RECT clientRectInScreenCoordinates;
 	// This one is not part of RudeWindowWin32Functions, but included nonetheless because its output might be interesting.
 	WINDOWPLACEMENT placement;
 
@@ -71,6 +72,7 @@ static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowI
 	printf("Styles: 0x%08lX\n", windowInfo->styles);
 	printf("Window rect: (%ld, %ld, %ld, %ld)\n", windowInfo->windowRect.left, windowInfo->windowRect.top, windowInfo->windowRect.right, windowInfo->windowRect.bottom);
 	printf("Client rect: (%ld, %ld, %ld, %ld)\n", windowInfo->clientRect.left, windowInfo->clientRect.top, windowInfo->clientRect.right, windowInfo->clientRect.bottom);
+	printf("Client rect in screen coordinates: (%ld, %ld, %ld, %ld)\n", windowInfo->clientRectInScreenCoordinates.left, windowInfo->clientRectInScreenCoordinates.top, windowInfo->clientRectInScreenCoordinates.right, windowInfo->clientRectInScreenCoordinates.bottom);
 	printf("Placement: showCmd %u minPosition (%ld, %ld) maxPosition (%ld, %ld), normalPosition (%ld, %ld, %ld, %ld)\n",
 		windowInfo->placement.showCmd,
 		windowInfo->placement.ptMinPosition.x, windowInfo->placement.ptMinPosition.y,
@@ -117,6 +119,16 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 
 	if (!GetClientRect(window, &windowInfo.clientRect))
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "clientRectError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(GetLastError(), "ErrorCode"));
+	else {
+		SetLastError(NO_ERROR);
+		RECT rect = windowInfo.clientRect;
+		MapWindowPoints(window, NULL, (LPPOINT)&rect, 2);
+		const DWORD clientRectMapWindowPointsError = GetLastError();
+		if (clientRectMapWindowPointsError != NO_ERROR)
+			TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "clientRectMapWindowPointsError", TraceLoggingPointer(window, "HWND"), TraceLoggingHexUInt32(clientRectMapWindowPointsError, "ErrorCode"));
+		else
+			windowInfo.clientRectInScreenCoordinates = rect;
+	}
 
 	windowInfo.placement.length = sizeof(windowInfo.placement);
 	if (!GetWindowPlacement(window, &windowInfo.placement))
@@ -184,6 +196,13 @@ static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_Window
 			TraceLoggingLong(oldWindowInfo->clientRect.right, "OldClientRectRight"), TraceLoggingLong(oldWindowInfo->clientRect.bottom, "OldClientRectBottom"),
 			TraceLoggingLong(newWindowInfo->clientRect.left, "NewClientRectLeft"), TraceLoggingLong(newWindowInfo->clientRect.top, "NewClientRectTop"),
 			TraceLoggingLong(newWindowInfo->clientRect.right, "NewClientRectRight"), TraceLoggingLong(newWindowInfo->clientRect.bottom, "NewClientRectBottom"));
+
+	if (!EqualRect(&oldWindowInfo->clientRectInScreenCoordinates, &newWindowInfo->clientRectInScreenCoordinates))
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClientRectInScreenCoordinatesChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingLong(oldWindowInfo->clientRectInScreenCoordinates.left, "OldClientRectInScreenCoordinatesLeft"), TraceLoggingLong(oldWindowInfo->clientRectInScreenCoordinates.top, "OldClientRectInScreenCoordinatesTop"),
+			TraceLoggingLong(oldWindowInfo->clientRectInScreenCoordinates.right, "OldClientRectInScreenCoordinatesRight"), TraceLoggingLong(oldWindowInfo->clientRectInScreenCoordinates.bottom, "OldClientRectInScreenCoordinatesBottom"),
+			TraceLoggingLong(newWindowInfo->clientRectInScreenCoordinates.left, "NewClientRectInScreenCoordinatesLeft"), TraceLoggingLong(newWindowInfo->clientRectInScreenCoordinates.top, "NewClientRectInScreenCoordinatesTop"),
+			TraceLoggingLong(newWindowInfo->clientRectInScreenCoordinates.right, "NewClientRectInScreenCoordinatesRight"), TraceLoggingLong(newWindowInfo->clientRectInScreenCoordinates.bottom, "NewClientRectInScreenCoordinatesBottom"));
 
 	if (oldWindowInfo->placement.showCmd != newWindowInfo->placement.showCmd)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "PlacementShowCmdChanged", TraceLoggingPointer(window, "HWND"),
