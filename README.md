@@ -38,6 +38,9 @@ arguments, it will:
 - Dump an initial list of all [visible windows][] to the standard output, along
   with the values of various window properties.
   - This is to provide the initial reference starting point.
+  - That list is also logged through the tracing provider (see below). Every
+    5 seconds, it is logged through the tracing provider again to provide
+    regular reference points.
 - Create a [message-only window][] that:
   - Registers and listens to [shell hook messages][].
     - The message identifier for shell hook messages is typically `0xC029`, but

@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <TraceLoggingProvider.h>
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <dwmapi.h>
 #include <avrt.h>
@@ -364,7 +365,16 @@ typedef struct WindowMonitor_Window_s WindowMonitor_Window;
 
 typedef struct {
 	WindowMonitor_Window* foregroundWindow;
+	time_t lastLog;
 } State;
+
+
+static void WindowMonitor_LogTopLevelWindows(const WindowMonitor_Window* window) {
+	while (window != NULL) {
+		WindowMonitor_LogWindowInfo(window->window, &window->info);
+		window = window->next;
+	}
+}
 
 static WindowMonitor_Window** WindowMonitor_SearchWindow(WindowMonitor_Window** window, HWND match) {
 	for (; *window != NULL && (*window)->window != match; window = &(*window)->next);
@@ -395,7 +405,7 @@ typedef struct {
 	UINT32 zOrder;
 } WindowMonitor_LogTopLevelWindows_State;
 
-static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
+static BOOL CALLBACK WindowMonitor_DiffTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
 	if (!IsWindowVisible(window)) return TRUE;
 
 	WindowMonitor_LogTopLevelWindows_State* const state = (WindowMonitor_LogTopLevelWindows_State *)lParam;
@@ -437,13 +447,13 @@ static BOOL CALLBACK WindowMonitor_LogTopLevelWindows_EnumWindowsProc(HWND windo
 	return TRUE;
 }
 
-static void WindowMonitor_LogTopLevelWindows(State* const state) {
+static void WindowMonitor_DiffTopLevelWindows(State* const state) {
 	WindowMonitor_MarkAllWindowsUnseen(state->foregroundWindow);
 
 	WindowMonitor_LogTopLevelWindows_State logTopLevelWindowsState;
 	logTopLevelWindowsState.window = &state->foregroundWindow;
 	logTopLevelWindowsState.zOrder = 0;
-	if (EnumWindows(WindowMonitor_LogTopLevelWindows_EnumWindowsProc, (LPARAM)&logTopLevelWindowsState) == 0) {
+	if (EnumWindows(WindowMonitor_DiffTopLevelWindows_EnumWindowsProc, (LPARAM)&logTopLevelWindowsState) == 0) {
 		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
 		exit(EXIT_FAILURE);
 	}
@@ -464,7 +474,15 @@ static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	}
 
 	State* const state = (State*)WindowInvestigator_GetWindowUserData(hWnd);
-	if (state != NULL) WindowMonitor_LogTopLevelWindows(state);
+	if (state != NULL) {
+		WindowMonitor_DiffTopLevelWindows(state);
+
+		const time_t now = time(NULL);
+		if (now > state->lastLog + 5) {
+			WindowMonitor_LogTopLevelWindows(state->foregroundWindow);
+			state->lastLog = now;
+		}
+	}
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "Done");
 
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
@@ -538,6 +556,7 @@ static int WindowMonitor_MonitorAllWindows(void) {
 
 	State state;
 	state.foregroundWindow = NULL;
+	state.lastLog = time(NULL);
 	const HWND window = CreateWindowW(
 		/*lpClassName=*/L"WindowInvestigator_WindowMonitor",
 		/*lpWindowName=*/L"WindowInvestigator_WindowMonitor",
