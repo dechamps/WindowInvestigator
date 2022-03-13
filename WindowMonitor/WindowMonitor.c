@@ -420,62 +420,53 @@ static void WindowMonitor_RemoveUnseenWindows(WindowMonitor_Window** nextWindow)
 	}
 }
 
-typedef struct {
-	WindowMonitor_Window** window;
-	UINT32 zOrder;
-} WindowMonitor_DiffTopLevelWindows_State;
-
-static BOOL CALLBACK WindowMonitor_DiffTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
-	if (!IsWindowVisible(window)) return TRUE;
-
-	WindowMonitor_DiffTopLevelWindows_State* const state = (WindowMonitor_DiffTopLevelWindows_State*)lParam;
-
-	BOOL isNewWindow = FALSE;
-	if (*state->window == NULL || (*state->window)->window != window) {
-		WindowMonitor_Window** const existingWindow = WindowMonitor_SearchWindow(state->window, window);
-		WindowMonitor_Window* const previousWindow = *state->window;
-		if (*existingWindow == NULL) {
-			TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "NewWindow", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
-			WindowMonitor_Window* const newWindow = *state->window = malloc(sizeof(**state->window));
-			if (newWindow == NULL) abort();
-			newWindow->window = window;
-			newWindow->seen = FALSE;
-			isNewWindow = TRUE;
-		}
-		else {
-			TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowZOrderChanged", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(state->zOrder, "newZOrder"));
-			*state->window = *existingWindow;
-			*existingWindow = (*existingWindow)->next;
-		}
-		(*state->window)->next = previousWindow;
-	}
-
-	WindowMonitor_Window* currentWindow = *state->window;
-
-	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
-	if (isNewWindow) WindowMonitor_LogWindowInfo(window, &windowInfo);
-	else WindowMonitor_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
-	currentWindow->info = windowInfo;
-
-	if (currentWindow->seen) {
-		fprintf(stderr, "Window 0x%p already seen!", window);
-		exit(EXIT_FAILURE);
-	}
-	currentWindow->seen = TRUE;
-	state->window = &(*state->window)->next;
-	++state->zOrder;
-	return TRUE;
-}
-
 static void WindowMonitor_DiffTopLevelWindows(State* const state) {
 	WindowMonitor_MarkAllWindowsUnseen(state->foregroundWindow);
 
-	WindowMonitor_DiffTopLevelWindows_State diffTopLevelWindowsState;
-	diffTopLevelWindowsState.window = &state->foregroundWindow;
-	diffTopLevelWindowsState.zOrder = 0;
-	if (EnumWindows(WindowMonitor_DiffTopLevelWindows_EnumWindowsProc, (LPARAM)&diffTopLevelWindowsState) == 0) {
-		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
-		exit(EXIT_FAILURE);
+	WindowMonitor_Window** currentWindowPtr = &state->foregroundWindow;
+	UINT32 zOrder = 0;
+	HWND window = NULL;
+	for (;;) {
+		// Note: we don't use EnumWindows because that won't return windows with band != 1 (DESKTOP). See https://wj32.org/wp/2012/12/12/enumwindows-no-longer-finds-metromodern-ui-windows-a-workaround-2/
+		window = FindWindowExW(NULL, window, NULL, NULL);
+		if (window == NULL) break;
+
+		if (!IsWindowVisible(window)) continue;
+
+		BOOL isNewWindow = FALSE;
+		if (*currentWindowPtr == NULL || (*currentWindowPtr)->window != window) {
+			WindowMonitor_Window** const existingWindow = WindowMonitor_SearchWindow(currentWindowPtr, window);
+			WindowMonitor_Window* const previousWindow = *currentWindowPtr;
+			if (*existingWindow == NULL) {
+				TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "NewWindow", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(zOrder, "newZOrder"));
+				WindowMonitor_Window* const newWindow = *currentWindowPtr = malloc(sizeof(**currentWindowPtr));
+				if (newWindow == NULL) abort();
+				newWindow->window = window;
+				newWindow->seen = FALSE;
+				isNewWindow = TRUE;
+			}
+			else {
+				TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowZOrderChanged", TraceLoggingPointer(window, "HWND"), TraceLoggingUInt32(zOrder, "newZOrder"));
+				*currentWindowPtr = *existingWindow;
+				*existingWindow = (*existingWindow)->next;
+			}
+			(*currentWindowPtr)->next = previousWindow;
+		}
+
+		WindowMonitor_Window* currentWindow = *currentWindowPtr;
+
+		const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+		if (isNewWindow) WindowMonitor_LogWindowInfo(window, &windowInfo);
+		else WindowMonitor_DiffWindowInfo(window, &currentWindow->info, &windowInfo);
+		currentWindow->info = windowInfo;
+
+		if (currentWindow->seen) {
+			fprintf(stderr, "Window 0x%p already seen!", window);
+			exit(EXIT_FAILURE);
+		}
+		currentWindow->seen = TRUE;
+		currentWindowPtr = &(*currentWindowPtr)->next;
+		++zOrder;
 	}
 
 	WindowMonitor_RemoveUnseenWindows(&state->foregroundWindow);
@@ -529,20 +520,17 @@ static void WindowMonitor_DumpWindow(HWND window, const WindowMonitor_WindowInfo
 	printf("\n");
 }
 
-static BOOL CALLBACK WindowMonitor_DumpTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
-	UNREFERENCED_PARAMETER(lParam);
-	if (!IsWindowVisible(window)) return TRUE;
-
-	const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
-	WindowMonitor_DumpWindow(window, &windowInfo);
-
-	return TRUE;
-}
-
 static void WindowMonitor_DumpTopLevelWindows(void) {
-	if (EnumWindows(WindowMonitor_DumpTopLevelWindows_EnumWindowsProc, 0) == 0) {
-		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
-		exit(EXIT_FAILURE);
+	HWND window = NULL;
+	for (;;) {
+		// Note: we don't use EnumWindows because that won't return windows with band != 1 (DESKTOP). See https://wj32.org/wp/2012/12/12/enumwindows-no-longer-finds-metromodern-ui-windows-a-workaround-2/
+		window = FindWindowExW(NULL, window, NULL, NULL);
+		if (window == NULL) break;
+
+		if (!IsWindowVisible(window)) continue;
+
+		const WindowMonitor_WindowInfo windowInfo = WindowMonitor_GetWindowInfo(window);
+		WindowMonitor_DumpWindow(window, &windowInfo);
 	}
 }
 
