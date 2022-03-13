@@ -423,12 +423,12 @@ static void WindowMonitor_RemoveUnseenWindows(WindowMonitor_Window** nextWindow)
 typedef struct {
 	WindowMonitor_Window** window;
 	UINT32 zOrder;
-} WindowMonitor_LogTopLevelWindows_State;
+} WindowMonitor_DiffTopLevelWindows_State;
 
 static BOOL CALLBACK WindowMonitor_DiffTopLevelWindows_EnumWindowsProc(HWND window, LPARAM lParam) {
 	if (!IsWindowVisible(window)) return TRUE;
 
-	WindowMonitor_LogTopLevelWindows_State* const state = (WindowMonitor_LogTopLevelWindows_State *)lParam;
+	WindowMonitor_DiffTopLevelWindows_State* const state = (WindowMonitor_DiffTopLevelWindows_State*)lParam;
 
 	BOOL isNewWindow = FALSE;
 	if (*state->window == NULL || (*state->window)->window != window) {
@@ -470,10 +470,10 @@ static BOOL CALLBACK WindowMonitor_DiffTopLevelWindows_EnumWindowsProc(HWND wind
 static void WindowMonitor_DiffTopLevelWindows(State* const state) {
 	WindowMonitor_MarkAllWindowsUnseen(state->foregroundWindow);
 
-	WindowMonitor_LogTopLevelWindows_State logTopLevelWindowsState;
-	logTopLevelWindowsState.window = &state->foregroundWindow;
-	logTopLevelWindowsState.zOrder = 0;
-	if (EnumWindows(WindowMonitor_DiffTopLevelWindows_EnumWindowsProc, (LPARAM)&logTopLevelWindowsState) == 0) {
+	WindowMonitor_DiffTopLevelWindows_State diffTopLevelWindowsState;
+	diffTopLevelWindowsState.window = &state->foregroundWindow;
+	diffTopLevelWindowsState.zOrder = 0;
+	if (EnumWindows(WindowMonitor_DiffTopLevelWindows_EnumWindowsProc, (LPARAM)&diffTopLevelWindowsState) == 0) {
 		fprintf(stderr, "EnumWindows() failed [0x%x]\n", GetLastError());
 		exit(EXIT_FAILURE);
 	}
