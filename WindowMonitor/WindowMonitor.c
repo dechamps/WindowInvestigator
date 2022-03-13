@@ -181,10 +181,10 @@ static void WindowMonitor_LogWindowInfo(HWND window, const WindowMonitor_WindowI
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowLogStart", TraceLoggingPointer(window, "HWND"));
 
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowProcessId", TraceLoggingPointer(window, "HWND"),
-		TraceLoggingHexUInt32(windowInfo->processId, "ProcessId"));
+		TraceLoggingUInt32(windowInfo->processId, "ProcessId"));
 
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowThreadId", TraceLoggingPointer(window, "HWND"),
-		TraceLoggingHexUInt32(windowInfo->threadId, "ThreadId"));
+		TraceLoggingUInt32(windowInfo->threadId, "ThreadId"));
 
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassName", TraceLoggingPointer(window, "HWND"),
 		TraceLoggingWideString(windowInfo->className, "ClassName"));
@@ -263,11 +263,11 @@ static void WindowMonitor_LogWindowInfo(HWND window, const WindowMonitor_WindowI
 static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_WindowInfo* oldWindowInfo, const WindowMonitor_WindowInfo* newWindowInfo) {
 	if (oldWindowInfo->processId != newWindowInfo->processId)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowProcessIdChanged", TraceLoggingPointer(window, "HWND"),
-			TraceLoggingHexUInt32(oldWindowInfo->processId, "OldProcessId"), TraceLoggingHexUInt32(newWindowInfo->processId, "NewProcessId"));
+			TraceLoggingUInt32(oldWindowInfo->processId, "OldProcessId"), TraceLoggingUInt32(newWindowInfo->processId, "NewProcessId"));
 
 	if (oldWindowInfo->threadId != newWindowInfo->threadId)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowThreadIdChanged", TraceLoggingPointer(window, "HWND"),
-			TraceLoggingHexUInt32(oldWindowInfo->threadId, "OldThreadId"), TraceLoggingHexUInt32(newWindowInfo->threadId, "NewThreadId"));
+			TraceLoggingUInt32(oldWindowInfo->threadId, "OldThreadId"), TraceLoggingUInt32(newWindowInfo->threadId, "NewThreadId"));
 	
 	if (wcscmp(oldWindowInfo->className, newWindowInfo->className) != 0)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
