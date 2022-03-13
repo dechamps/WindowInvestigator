@@ -11,6 +11,9 @@
 #include <avrt.h>
 
 typedef struct {
+	DWORD processId;
+	DWORD threadId;
+
 	// RudeWindowWin32Functions::GetClassNameW()
 	wchar_t className[1024];
 
@@ -68,6 +71,7 @@ typedef struct {
 } WindowMonitor_WindowInfo;
 
 static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowInfo) {
+	printf("PID: %lu TID: %lu\n", windowInfo->processId, windowInfo->threadId);
 	printf("Class name: \"%S\"\n", windowInfo->className);
 	printf("Extended styles: 0x%08X\n", windowInfo->extendedStyles);
 	printf("Styles: 0x%08lX\n", windowInfo->styles);
@@ -96,6 +100,8 @@ static void WindowMonitor_DumpWindowInfo(const WindowMonitor_WindowInfo* windowI
 
 static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 	WindowMonitor_WindowInfo windowInfo;
+
+	windowInfo.threadId = GetWindowThreadProcessId(window, &windowInfo.processId);
 
 	SetLastError(NO_ERROR);
 	GetClassNameW(window, windowInfo.className, sizeof(windowInfo.className) / sizeof(*windowInfo.className));
@@ -174,6 +180,12 @@ static WindowMonitor_WindowInfo WindowMonitor_GetWindowInfo(HWND window) {
 static void WindowMonitor_LogWindowInfo(HWND window, const WindowMonitor_WindowInfo* windowInfo) {
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowLogStart", TraceLoggingPointer(window, "HWND"));
 
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowProcessId", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingHexUInt32(windowInfo->processId, "ProcessId"));
+
+	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowThreadId", TraceLoggingPointer(window, "HWND"),
+		TraceLoggingHexUInt32(windowInfo->threadId, "ThreadId"));
+
 	TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassName", TraceLoggingPointer(window, "HWND"),
 		TraceLoggingWideString(windowInfo->className, "ClassName"));
 
@@ -249,6 +261,14 @@ static void WindowMonitor_LogWindowInfo(HWND window, const WindowMonitor_WindowI
 }
 
 static void WindowMonitor_DiffWindowInfo(HWND window, const WindowMonitor_WindowInfo* oldWindowInfo, const WindowMonitor_WindowInfo* newWindowInfo) {
+	if (oldWindowInfo->processId != newWindowInfo->processId)
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowProcessIdChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingHexUInt32(oldWindowInfo->processId, "OldProcessId"), TraceLoggingHexUInt32(newWindowInfo->processId, "NewProcessId"));
+
+	if (oldWindowInfo->threadId != newWindowInfo->threadId)
+		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowThreadIdChanged", TraceLoggingPointer(window, "HWND"),
+			TraceLoggingHexUInt32(oldWindowInfo->threadId, "OldThreadId"), TraceLoggingHexUInt32(newWindowInfo->threadId, "NewThreadId"));
+	
 	if (wcscmp(oldWindowInfo->className, newWindowInfo->className) != 0)
 		TraceLoggingWrite(WindowInvestigator_traceloggingProvider, "WindowClassNameChanged", TraceLoggingPointer(window, "HWND"),
 			TraceLoggingWideString(oldWindowInfo->className, "OldClassName"), TraceLoggingWideString(newWindowInfo->className, "NewClassName"));
@@ -491,10 +511,7 @@ static LRESULT CALLBACK WindowMonitor_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 static void WindowMonitor_DumpWindow(HWND window, const WindowMonitor_WindowInfo* windowInfo) {
 	printf("HWND: 0x%p\n", window);
 
-	DWORD processId;
-	const DWORD threadId = GetWindowThreadProcessId(window, &processId);
-	printf("PID: %lu TID: %lu ", processId, threadId);
-	const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+	const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, windowInfo->processId);
 	if (process == NULL)
 		printf("(could not open process [0x%x])", GetLastError());
 	else {
@@ -503,7 +520,7 @@ static void WindowMonitor_DumpWindow(HWND window, const WindowMonitor_WindowInfo
 		if (!QueryFullProcessImageNameW(process, /*dwFlags=*/0, imageName, &imageNameSize))
 			printf("(could not get process image name[0x % x])", GetLastError());
 		else
-			printf("\"%S\"", imageName);
+			printf("Process name: \"%S\"", imageName);
 	}
 	printf("\n");
 
