@@ -29,6 +29,20 @@ load the included [`WindowManagementLogging.wprp`][] [recording profile][] into
 the [Windows Performance Recorder (WPR)][] for a more thorough analysis. The
 Provider Name will appear as `Microsoft-Windows-Desktop-Shell-Windowing`.
 
+## Shell Core Provider logging
+
+Some of the internal Windows taskbar state management code uses the [Shell Core
+logging provider][] to log various events which can be useful for correlation.
+
+This is  an [Event Tracing for Windows (ETW)][] provider whose GUID is
+`30336ED4-E327-447C-9DE0-51B652C86108` (credit goes to Geoff Chappell).
+
+You can use this GUID in event consumers to receive the log. For example you
+can enter the GUID directly in [TraceView][] for real time logging, or you can
+load the included [`ShellCore.wprp`][] [recording profile][] into the
+[Windows Performance Recorder (WPR)][] for a more thorough analysis. The
+Provider Name will appear as `Microsoft-Windows-Shell-Core`.
+
 ## WindowMonitor
 
 WindowMonitor is a command line tool that is aimed at investigating window
@@ -173,6 +187,8 @@ There are no dependencies besides the Windows SDK.
 [public Microsoft symbols]: https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/microsoft-public-symbols
 [recording profile]: https://docs.microsoft.com/en-us/windows-hardware/test/wpt/authoring-recording-profiles
 [RudeWindowFixer]: https://github.com/dechamps/RudeWindowFixer
+[`ShellCore.wprp`]: ShellCore.wprp
+[Shell Core logging provider]: https://www.geoffchappell.com/notes/windows/shell/events/core.htm
 [shell hook messages]: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registershellhookwindow
 [TraceView]: https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/traceview
 [Spy++]: https://docs.microsoft.com/en-us/visualstudio/debugger/spy-increment-help

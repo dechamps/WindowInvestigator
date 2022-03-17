@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+	<Profiles>
+		<EventCollector Id="EventCollector_ShellCore" Name="ShellCore" />
+		<Profile Id="ShellCore.Verbose.File" Name="ShellCore" Description="ShellCore" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors>
+				<EventCollectorId Value="EventCollector_ShellCore">
+					<EventProviders>
+						<EventProvider Id="EventProvider_ShellCore" Name="30336ED4-E327-447C-9DE0-51B652C86108" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="ShellCore.Verbose.Memory" Base="ShellCore.Verbose.File" LoggingMode="Memory" Name="ShellCore" Description="ShellCore" DetailLevel="Verbose" />
+	</Profiles>
+</WindowsPerformanceRecorder>
